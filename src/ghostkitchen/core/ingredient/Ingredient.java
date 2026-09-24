@@ -20,7 +20,7 @@ public abstract class Ingredient {
         this.baseline = baseline;
         this.sandwichHeight = sandwichHeight;
         setScale(2.0);
-        setPos(0, -getBaseline());
+        setPos(0.0, -getBaseline());
     }
 
     public AABB getAABB() {
@@ -37,38 +37,41 @@ public abstract class Ingredient {
     public double getWidth() { return this.aabb.width; }
     public double getHeight() { return this.aabb.height; }
 
-    public double getBaseline() { return this.baseline * this.scale; }
-    public double getSandwichHeight() { return this.sandwichHeight * this.scale; }
+    public double getScale() { return this.scale; } 
+    public double getBaseline() { return this.baseline * getScale(); }
+    public double getSandwichHeight() { return this.sandwichHeight * getScale(); }
 
     public void setActiveAABB(boolean active) { this.aabb.active = active; }
 
     public void setPos(double posX, double posY) { aabb.move(posX - getPosX(), posY - getPosY()); }
 
     public void setScale(double scale) {
-        this.scale = scale;
         double posX = this.getPosX();
         double posY = this.getPosY();
-        this.aabb.setSize(this.aabb.width * scale, this.aabb.height * scale);
+
+        if(this.scale == 0.0) this.scale = 1.0;
+        this.aabb.setSize(this.aabb.width / this.scale * scale, this.aabb.height / this.scale * scale);
+        this.scale = scale;
         this.setPos(posX, posY);
     }
 
-    public void draw(EngineFrame e, boolean grabbed) {
+    public void draw(EngineFrame e, double animationOffset) {
         double width = image.getWidth();
         double height = image.getHeight();
         
         double scale = this.scale;
-        double rotation = 0;
+        double rotation = 0.0;
 
-        if(grabbed) {
-            rotation = Math.sin(15 * e.getTime()) * 5;
+        if(animationOffset != 0.0) {
+            rotation = Math.sin(animationOffset) * 5.0;
             scale *= 1.1;
         }
 
         //Scaled and centered
-        Rectangle src = new Rectangle(0, 0, width, height);
-        Rectangle dest = new Rectangle(getPosX() - width / 2 * scale, getPosY() - height / 2 * scale, width * scale, height * scale);
+        Rectangle src = new Rectangle(0.0, 0.0, width, height);
+        Rectangle dest = new Rectangle(getPosX() - width / 2.0 * scale, getPosY() - height / 2.0 * scale, width * scale, height * scale);
 
-        image.draw(e, src, dest, width / 2 * scale, height / 2 * scale, rotation);
-        aabb.draw(e, EngineFrame.BLUE);
+        image.draw(e, src, dest, width / 2.0 * scale, height / 2.0 * scale, rotation);
+        //aabb.draw(e, EngineFrame.BLUE);
     }
 }

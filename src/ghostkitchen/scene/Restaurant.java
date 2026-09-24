@@ -20,7 +20,7 @@ public class Restaurant extends Scene {
     private Grabbable grabbed;
 
     public Restaurant(EngineFrame e) {
-        this.engine = e;
+        super(e, "restaurant.png");
         this.grabbables = new LinkedList<>();
     }
 
@@ -34,13 +34,13 @@ public class Restaurant extends Scene {
         double midX = engine.getScreenWidth() / 2;
         double midY = engine.getScreenHeight() / 2;
         if(engine.isKeyPressed(EngineFrame.KEY_ONE)) spawnIngredient(new Plate(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_TWO)) spawnIngredient(new Bun(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_THREE)) spawnIngredient(new BunBottom(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_FOUR)) spawnIngredient(new BunTop(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_FIVE)) spawnIngredient(new Patty(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_SIX)) spawnIngredient(new Cheese(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_SEVEN)) spawnIngredient(new Cone(), midX, midY);
-        if(engine.isKeyPressed(EngineFrame.KEY_EIGHT)) spawnIngredient(new IceCreamStrawberry(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_TWO)) spawnIngredient(new BunBottom(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_THREE)) spawnIngredient(new Patty(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_FOUR)) spawnIngredient(new Cheese(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_FIVE)) spawnIngredient(new BunTop(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_SIX)) spawnIngredient(new Cone(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_SEVEN)) spawnIngredient(new IceCreamStrawberry(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_EIGHT)) spawnIngredient(new Bun(), midX, midY);
 
         boolean attemptGrab = false;
         //Update logic for the grabbed grabbable

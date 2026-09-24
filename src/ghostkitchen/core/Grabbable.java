@@ -12,7 +12,7 @@ import ghostkitchen.core.ingredient.Plate;
 public class Grabbable implements Iterable<Ingredient> {
     private AABB aabb;
     private Deque<Ingredient> ingredients;
-    protected boolean grabbed;
+    private boolean grabbed;
 
     public Grabbable() {
         this(0.0, 0.0);
@@ -95,11 +95,10 @@ public class Grabbable implements Iterable<Ingredient> {
     }
 
     public void update(double delta) {
-        
     }
 
-    public double getPosX() { return (this.aabb.x1 + this.aabb.x2) / 2; }
-    public double getPosY() { return (this.aabb.y1 + this.aabb.y2) / 2; }
+    public double getPosX() { return this.ingredients.getFirst().getPosX(); }
+    public double getPosY() { return this.ingredients.getFirst().getPosY(); }
 
     public void setPos(double posX, double posY) {
         this.setPos(posX, posY, 0.0);
@@ -149,10 +148,15 @@ public class Grabbable implements Iterable<Ingredient> {
     }
 
     public void draw(EngineFrame e) {
+        double baseAnimOffset = 10.0 * e.getTime();
+
         for(Ingredient i : ingredients) {
-            i.draw(e, grabbed);
+            double layerAnimOffset = (getPosY() - i.getPosY()) / i.getScale();
+
+            //Only animate when the grabbable is grabbed
+            i.draw(e, grabbed ? baseAnimOffset + layerAnimOffset : 0.0);
         }
-        aabb.draw(e, EngineFrame.RED);
+        //aabb.draw(e, EngineFrame.RED);
     }
 
     @Override
