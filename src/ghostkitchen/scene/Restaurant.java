@@ -3,7 +3,9 @@ package ghostkitchen.scene;
 import java.util.LinkedList;
 import java.util.List;
 
+import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
+import ghostkitchen.Main;
 import ghostkitchen.core.Grabbable;
 import ghostkitchen.core.ingredient.Bun;
 import ghostkitchen.core.ingredient.BunBottom;
@@ -18,10 +20,16 @@ import ghostkitchen.core.ingredient.Plate;
 public class Restaurant extends Scene {
     private List<Grabbable> grabbables;
     private Grabbable grabbed;
+    private AABB cookingArea;
 
     public Restaurant(EngineFrame e) {
-        super(e, "restaurant.png");
+        super(e, "park.png", "restaurant.png");
         this.grabbables = new LinkedList<>();
+    }
+
+    public void setUpCookingArea() {
+        grabbables.clear();
+        cookingArea = new AABB(80.0, 0.0, (double)(engine.getWidth() - 80), (double)(engine.getHeight() - 240), this);
     }
 
     public void spawnIngredient(Ingredient ingredient, double posX, double posY) {
@@ -43,19 +51,10 @@ public class Restaurant extends Scene {
         if(engine.isKeyPressed(EngineFrame.KEY_EIGHT)) spawnIngredient(new Bun(), midX, midY);
 
         boolean attemptGrab = false;
-        //Update logic for the grabbed grabbable
-        if(grabbed != null) {
-            grabbed.setPos(engine.getMouseX(), engine.getMouseY());
-            if(engine.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) {
-                grabbed.drop();
-                grabbed = null;
-            }
-        }
-        else if(engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) attemptGrab = true;
+        if(engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) attemptGrab = true;
 
         for(int i = grabbables.size() - 1; i >= 0; i--) {
             Grabbable g = grabbables.get(i);
-            g.update(delta);
 
             //Grab logic
             if(attemptGrab && grabbed == null) {
@@ -77,12 +76,33 @@ public class Restaurant extends Scene {
                     }
                 }
             }
+
+            g.update(delta);
+            g.limitPos(cookingArea);
+        }
+
+        //Update logic for the grabbed grabbable
+        if(grabbed != null) {
+            grabbed.setPos(engine.getMouseX(), engine.getMouseY());
+            if(engine.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) {
+                grabbed.drop();
+                grabbed = null;
+            }
         }
     }
 
-    public void draw() {
+    @Override
+    public void drawBefore() {
+        super.drawBefore();
+    }
+
+    @Override
+    public void drawAfter() {
         for(Grabbable g : grabbables) {
             g.draw(engine);
         }
+        if(Main.debug()) cookingArea.draw(engine, EngineFrame.GREEN);
+
+        super.drawAfter();
     }
 }

@@ -6,6 +6,7 @@ import java.util.Iterator;
 
 import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
+import ghostkitchen.Main;
 import ghostkitchen.core.ingredient.Ingredient;
 import ghostkitchen.core.ingredient.Plate;
 
@@ -47,7 +48,7 @@ public class Grabbable implements Iterable<Ingredient> {
     }
 
     public Ingredient pop() {
-        Ingredient popped = resize(ingredients.peekLast(), true);
+        Ingredient popped = resize(ingredients.peekLast());
         if(!isEmpty()) peek().setActiveAABB(true);
         return popped;
     }
@@ -85,7 +86,7 @@ public class Grabbable implements Iterable<Ingredient> {
     }
 
     public boolean merge(Grabbable g) {
-        if(aabb.active && g.aabb.active && aabb.collidesWith(g.aabb)) {
+        if(!g.grabbed && aabb.active && g.aabb.active && aabb.collidesWith(g.aabb)) {
             for(Ingredient i : this) {
                 g.push(i);
             }
@@ -100,19 +101,21 @@ public class Grabbable implements Iterable<Ingredient> {
     public double getPosX() { return this.ingredients.getFirst().getPosX(); }
     public double getPosY() { return this.ingredients.getFirst().getPosY(); }
 
-    public void setPos(double posX, double posY) {
-        this.setPos(posX, posY, 0.0);
+    public void limitPos(AABB area) {
+        double distanceX = peek().getCollisionWidth() / 2.0;
+        double distanceY = ingredients.getFirst().getBaseline();
+        setPos(
+            Math.max(area.x1 + distanceX, Math.min(area.x2 - distanceX, getPosX())),
+            Math.max(area.y1, Math.min(area.y2 + distanceY, getPosY()))
+        );
     }
 
-    private void setPos(double posX, double posY, double offsetX) {
+    public void setPos(double posX, double posY) {
         Ingredient base = ingredients.peekFirst();
         double deltaY = posY - base.getPosY();
-        double deltaX = posX - base.getPosX();
 
         for(Ingredient g : ingredients) {
-            g.setPos(g.getPosX() + deltaX, g.getPosY() + deltaY);
-            deltaX += offsetX;
-            offsetX *= 2;
+            g.setPos(posX, g.getPosY() + deltaY);
         }
 
         aabb.x1 = posX - aabb.width / 2;
@@ -122,25 +125,31 @@ public class Grabbable implements Iterable<Ingredient> {
     }
 
     private Ingredient resize(Ingredient ingredient) {
-        return resize(ingredient, false);
-    }
-
-    private Ingredient resize(Ingredient ingredient, boolean pop) {
         int size = size();
+        Ingredient top = peek();
+        boolean pop = ingredient == top;
 
         if(!pop) ingredients.add(ingredient);
 
-        if(!isEmpty()) {
+        //Intentionally uses the pre-addition value to ensure the AABB is only recalculated starting from the second addition
+        if(size > 0) {
             int amount = pop ? -1 : 1;
             double posX = getPosX();
+            double collisionWidth = top.getCollisionWidth();
 
             aabb.width = (aabb.width * size + amount * ingredient.getWidth()) / (size + amount);
             aabb.x1 = posX - aabb.width / 2;
             aabb.x2 = posX + aabb.width / 2;
 
-            if(pop) ingredient = ingredients.removeLast();
+            if(pop) {
+                ingredient = ingredients.removeLast();
+                collisionWidth = ingredient.getWidth();
+            }
+            top = peek();
 
-            aabb.y1 = peek().getPosY() - peek().getHeight() / 2;
+            ingredient.setCollisionWidth(Math.max(collisionWidth, ingredient.getWidth()));
+
+            aabb.y1 = top.getPosY() - top.getHeight() / 2;
             aabb.height = aabb.y2 - aabb.y1;
         }
 
@@ -156,7 +165,14 @@ public class Grabbable implements Iterable<Ingredient> {
             //Only animate when the grabbable is grabbed
             i.draw(e, grabbed ? baseAnimOffset + layerAnimOffset : 0.0);
         }
-        //aabb.draw(e, EngineFrame.RED);
+
+        if(Main.debug()) {
+            double collisionWidth = peek().getCollisionWidth();
+            //Collision box
+            e.drawRectangle(getPosX() - collisionWidth / 2.0, aabb.y1, collisionWidth, aabb.height, EngineFrame.RED);
+            //Interaction box
+            aabb.draw(e, EngineFrame.GREEN);
+        }
     }
 
     @Override

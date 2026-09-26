@@ -14,25 +14,27 @@ import ghostkitchen.scene.Scene;
  * @author Prof. Dr. David Buzatto
  */
 public class Main extends EngineFrame {
-    
+    private static boolean debug = false;
+
     private Image icon;
     private Scene restaurant;
     
     public Main() {
         
         super(
-            800,                 // largura                      / width
-            450,                 // algura                       / height
+            1536,                 // largura                      / width
+            864,                 // algura                       / height
             "Window Title",      // título                       / title
             60,                  // quadros por segundo desejado / target FPS
             true,                // suavização                   / antialiasing
             false,               // redimensionável              / resizable
-            false,               // tela cheia                   / full screen
+            true,               // tela cheia                   / full screen
             false,               // sem decoração                / undecorated
             false,               // sempre no topo               / always on top
             false                // fundo invisível              / invisible background
         );
-        
+
+        ((Restaurant)this.restaurant).setUpCookingArea();
     }
     
     /**
@@ -46,7 +48,6 @@ public class Main extends EngineFrame {
     public void create() {
         icon = ImageUtils.loadImage("resources/images/icon.png");
         setWindowIcon( icon );
-
         restaurant = new Restaurant(this);
     }
 
@@ -85,7 +86,20 @@ public class Main extends EngineFrame {
      * Instantiates the engine and starts it.
      */
     public static void main( String[] args ) {
+        if(hasFlag(args, "d", "debug")) debug = true;
+
         new Main();
     }
-    
+
+    private static boolean hasFlag(String[] args, String shortVersion, String longVersion) {
+        if(args == null || shortVersion == null && longVersion == null) return false;
+
+        for(String s : args) {
+            if(s.equals("-" + shortVersion) || s.equals("--" + longVersion)) return true;
+        }
+
+        return false;
+    }
+
+    public static boolean debug() { return debug; }
 }

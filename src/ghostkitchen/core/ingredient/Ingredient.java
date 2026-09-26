@@ -5,10 +5,12 @@ import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
+import ghostkitchen.Main;
 
 public abstract class Ingredient {
     private AABB aabb;
     private Image image;
+    private double collisionWidth;
     private double baseline;
     private double sandwichHeight;
     private double scale;
@@ -17,9 +19,10 @@ public abstract class Ingredient {
         this.aabb = new AABB(0.0, 0.0, width, height, this);
         this.aabb.type = AABB.Type.DYNAMIC;
         this.image = ImageUtils.loadImage("resources/images/ingredients/" + image);
+        this.collisionWidth = width;
         this.baseline = baseline;
         this.sandwichHeight = sandwichHeight;
-        setScale(2.0);
+        setScale(3.0);
         setPos(0.0, -getBaseline());
     }
 
@@ -38,6 +41,7 @@ public abstract class Ingredient {
     public double getHeight() { return this.aabb.height; }
 
     public double getScale() { return this.scale; } 
+    public double getCollisionWidth() { return this.collisionWidth; };
     public double getBaseline() { return this.baseline * getScale(); }
     public double getSandwichHeight() { return this.sandwichHeight * getScale(); }
 
@@ -51,9 +55,12 @@ public abstract class Ingredient {
 
         if(this.scale == 0.0) this.scale = 1.0;
         this.aabb.setSize(this.aabb.width / this.scale * scale, this.aabb.height / this.scale * scale);
+        this.collisionWidth = Math.max(collisionWidth, getWidth());
         this.scale = scale;
         this.setPos(posX, posY);
     }
+
+    public void setCollisionWidth(double width) { this.collisionWidth = width; }
 
     public void draw(EngineFrame e, double animationOffset) {
         double width = image.getWidth();
@@ -69,9 +76,18 @@ public abstract class Ingredient {
 
         //Scaled and centered
         Rectangle src = new Rectangle(0.0, 0.0, width, height);
-        Rectangle dest = new Rectangle(getPosX() - width / 2.0 * scale, getPosY() - height / 2.0 * scale, width * scale, height * scale);
+        Rectangle dest = new Rectangle(getPosX() - (width / 2.0) * scale, getPosY() - height / 2.0 * scale, width * scale, height * scale);
 
         image.draw(e, src, dest, width / 2.0 * scale, height / 2.0 * scale, rotation);
-        //aabb.draw(e, EngineFrame.BLUE);
+
+        if(Main.debug()) {
+            double centerY = getPosY();
+            double baseline = centerY - getBaseline();
+            double topline = baseline - getSandwichHeight();
+
+            aabb.draw(e, EngineFrame.BLUE);
+            e.drawLine(aabb.x1, baseline, aabb.x2, baseline, EngineFrame.ORANGE);
+            e.drawLine(aabb.x1, topline, aabb.x2, topline, EngineFrame.ORANGE);
+        }
     }
 }
