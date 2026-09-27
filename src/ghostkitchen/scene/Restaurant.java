@@ -2,11 +2,16 @@ package ghostkitchen.scene;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ThreadLocalRandom;
 
 import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import ghostkitchen.Main;
 import ghostkitchen.core.Grabbable;
+import ghostkitchen.core.Order;
+import ghostkitchen.core.client.Client;
+import ghostkitchen.core.client.Placeholder;
 import ghostkitchen.core.ingredient.Bun;
 import ghostkitchen.core.ingredient.BunBottom;
 import ghostkitchen.core.ingredient.BunTop;
@@ -19,12 +24,18 @@ import ghostkitchen.core.ingredient.Plate;
 
 public class Restaurant extends Scene {
     private List<Grabbable> grabbables;
+    private Queue<Order> orders;
+    private Client[] clients;
     private Grabbable grabbed;
     private AABB cookingArea;
 
     public Restaurant(EngineFrame e) {
         super(e, "park.png", "restaurant.png");
         this.grabbables = new LinkedList<>();
+        this.orders = new LinkedList<>();
+        this.clients = new Client[] {
+            new Placeholder()
+        };
     }
 
     public void setUpCookingArea() {
@@ -49,6 +60,7 @@ public class Restaurant extends Scene {
         if(engine.isKeyPressed(EngineFrame.KEY_SIX)) spawnIngredient(new Cone(), midX, midY);
         if(engine.isKeyPressed(EngineFrame.KEY_SEVEN)) spawnIngredient(new IceCreamStrawberry(), midX, midY);
         if(engine.isKeyPressed(EngineFrame.KEY_EIGHT)) spawnIngredient(new Bun(), midX, midY);
+        if(engine.isKeyPressed(EngineFrame.KEY_ZERO)) orders.add(new Order(clients[ThreadLocalRandom.current().nextInt(clients.length)]));
 
         boolean attemptGrab = false;
         if(engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) attemptGrab = true;
@@ -78,7 +90,7 @@ public class Restaurant extends Scene {
             }
 
             g.update(delta);
-            g.limitPos(cookingArea);
+            g.limitPos(cookingArea); //TODO: arrumar os elementos sendo limitados ao serem encaixados no grabbable
         }
 
         //Update logic for the grabbed grabbable
@@ -98,6 +110,13 @@ public class Restaurant extends Scene {
 
     @Override
     public void drawAfter() {
+        //TODO: proper order queue
+        double tempX = 100.0;
+        for(Order o : orders) {
+            o.draw(engine, tempX, 100);
+            tempX += 100.0;
+        }
+
         for(Grabbable g : grabbables) {
             g.draw(engine);
         }

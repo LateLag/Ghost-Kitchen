@@ -16,14 +16,15 @@ public abstract class Ingredient {
     private double scale;
 
     protected Ingredient(String image, double width, double height, double baseline, double sandwichHeight) {
-        this.aabb = new AABB(0.0, 0.0, width, height, this);
+        double halfDimX = width / 2.0;
+        double halfDimY = height / 2.0;
+        this.aabb = new AABB(-halfDimX, -halfDimY, halfDimX, halfDimY, this);
         this.aabb.type = AABB.Type.DYNAMIC;
         this.image = ImageUtils.loadImage("resources/images/ingredients/" + image);
         this.collisionWidth = width;
         this.baseline = baseline;
         this.sandwichHeight = sandwichHeight;
         setScale(3.0);
-        setPos(0.0, -getBaseline());
     }
 
     public AABB getAABB() {
@@ -34,8 +35,14 @@ public abstract class Ingredient {
         return copy;
     }
 
-    public double getPosX() { return (this.aabb.x1 + this.aabb.x2) / 2; }
-    public double getPosY() { return (this.aabb.y1 + this.aabb.y2) / 2; }
+    public AABB getOffsetAABB(double x, double y) {
+        AABB copy = getAABB();
+        copy.move(x, y);
+        return copy;
+    }
+
+    public double getLocalPosX() { return (this.aabb.x1 + this.aabb.x2) / 2; }
+    public double getLocalPosY() { return (this.aabb.y1 + this.aabb.y2) / 2; }
 
     public double getWidth() { return this.aabb.width; }
     public double getHeight() { return this.aabb.height; }
@@ -47,22 +54,26 @@ public abstract class Ingredient {
 
     public void setActiveAABB(boolean active) { this.aabb.active = active; }
 
-    public void setPos(double posX, double posY) { aabb.move(posX - getPosX(), posY - getPosY()); }
+    public void setLocalPos(double posX, double posY) { aabb.move(posX - getLocalPosX(), posY - getLocalPosY()); }
 
     public void setScale(double scale) {
-        double posX = this.getPosX();
-        double posY = this.getPosY();
+        double posX = this.getLocalPosX();
+        double posY = this.getLocalPosY();
 
         if(this.scale == 0.0) this.scale = 1.0;
         this.aabb.setSize(this.aabb.width / this.scale * scale, this.aabb.height / this.scale * scale);
         this.collisionWidth = Math.max(collisionWidth, getWidth());
         this.scale = scale;
-        this.setPos(posX, posY);
+        this.setLocalPos(posX, posY);
     }
 
     public void setCollisionWidth(double width) { this.collisionWidth = width; }
 
-    public void draw(EngineFrame e, double animationOffset) {
+    public void draw(EngineFrame e) { draw(e, 0.0); }
+    public void draw(EngineFrame e, double offsetX, double offsetY) { draw(e, offsetX, offsetY, 0.0); }
+    public void draw(EngineFrame e, double animationOffset) { draw(e, 0.0, 0.0, animationOffset); }
+
+    public void draw(EngineFrame e, double offsetX, double offsetY, double animationOffset) {
         double width = image.getWidth();
         double height = image.getHeight();
         
@@ -76,18 +87,19 @@ public abstract class Ingredient {
 
         //Scaled and centered
         Rectangle src = new Rectangle(0.0, 0.0, width, height);
-        Rectangle dest = new Rectangle(getPosX() - (width / 2.0) * scale, getPosY() - height / 2.0 * scale, width * scale, height * scale);
+        Rectangle dest = new Rectangle(getLocalPosX() - (width / 2.0) * scale + offsetX, getLocalPosY() - height / 2.0 * scale + offsetY, width * scale, height * scale);
 
         image.draw(e, src, dest, width / 2.0 * scale, height / 2.0 * scale, rotation);
 
-        if(Main.debug()) {
-            double centerY = getPosY();
-            double baseline = centerY - getBaseline();
+        if(Main.debug() && aabb.active) {
+            AABB tempAABB = getAABB();
+            tempAABB.move(offsetX, offsetY);
+            double baseline = (tempAABB.y1 + tempAABB.y2) / 2 - getBaseline();
             double topline = baseline - getSandwichHeight();
 
-            aabb.draw(e, EngineFrame.BLUE);
-            e.drawLine(aabb.x1, baseline, aabb.x2, baseline, EngineFrame.ORANGE);
-            e.drawLine(aabb.x1, topline, aabb.x2, topline, EngineFrame.ORANGE);
+            tempAABB.draw(e, EngineFrame.BLUE);
+            e.drawLine(tempAABB.x1, baseline, tempAABB.x2, baseline, EngineFrame.VIOLET);
+            e.drawLine(tempAABB.x1, topline, tempAABB.x2, topline, EngineFrame.VIOLET);
         }
     }
 }
