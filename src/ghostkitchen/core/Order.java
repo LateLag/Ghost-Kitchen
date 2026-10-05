@@ -2,11 +2,10 @@ package ghostkitchen.core;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import ghostkitchen.core.client.Client;
-import ghostkitchen.core.ingredient.Ingredient;
+import ghostkitchen.core.item.Ingredient;
 
 public class Order {
     Client client;
@@ -18,7 +17,7 @@ public class Order {
     }
 
     private List<Ingredient> generateWantedDish() {
-        List<Class<? extends Ingredient>>[] preferences = client.getPreferences();
+        List<LayerPrefs> preferences = client.getLayerPrefs();
         if(preferences == null) throw new IllegalStateException("Preferences not yet initialized!");
 
         List<Ingredient> dish = new ArrayList<>();
@@ -27,25 +26,18 @@ public class Order {
         Grabbable g = new Grabbable();
         g.pop(); //No plate
 
-        for(List<Class<? extends Ingredient>> layer : preferences) {
-            Ingredient ingredient = generateRandomIngredient(layer);
-            ingredient.setScale(1.0);
-            ingredient.setActiveAABB(false);
-            g.push(ingredient);
-            dish.add(ingredient);
+        //Pick random ingredient for each layer from top to bottom
+        for(LayerPrefs layer : preferences) {
+            Ingredient ingredient = layer.pickRandom();
+            if(ingredient != null) {
+                ingredient.setScale(1.0);
+                ingredient.setActiveAABB(false);
+                g.push(ingredient);
+                dish.add(ingredient);
+            }
         }
         
         return dish;
-    }
-
-    private static Ingredient generateRandomIngredient(List<Class<? extends Ingredient>> possibleTypes) {
-        //Pick a random possible ingredient from the list
-        Class<? extends Ingredient> type = possibleTypes.get(ThreadLocalRandom.current().nextInt(possibleTypes.size()));
-        try {
-            return type.getDeclaredConstructor().newInstance();
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Failed to create ingredient", e);
-        }
     }
 
     public void draw(EngineFrame e, double posX, double posY) {

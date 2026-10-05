@@ -1,30 +1,36 @@
-package ghostkitchen.core.ingredient;
+package ghostkitchen.core.item;
 
 import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
-import ghostkitchen.Main;
 
-public abstract class Ingredient {
+import ghostkitchen.Main;
+import ghostkitchen.core.Grabbable;
+
+public abstract class Item {
     private AABB aabb;
     private Image image;
     private double collisionWidth;
-    private double baseline;
-    private double sandwichHeight;
+    private int baseline;
+    private int sandwichHeight;
     private double scale;
 
-    protected Ingredient(String image, double width, double height, double baseline, double sandwichHeight) {
-        double halfDimX = width / 2.0;
-        double halfDimY = height / 2.0;
+    protected Item(String image, int width, int height, int baseline) {
+        this(image, width, height, baseline, 0);
+    }
+
+    protected Item(String image, int width, int height, int baseline, int sandwichHeight) {
+        double halfDimX = (double)width / 2.0;
+        double halfDimY = (double)height / 2.0;
         this.aabb = new AABB(-halfDimX, -halfDimY, halfDimX, halfDimY, this);
         this.aabb.type = AABB.Type.DYNAMIC;
-        this.image = ImageUtils.loadImage("resources/images/ingredients/" + image);
-        this.collisionWidth = width;
+        this.image = ImageUtils.loadImage("resources/images/items/" + image);
+        this.collisionWidth = (double)width;
         this.baseline = baseline;
         this.sandwichHeight = sandwichHeight;
-        setScale(3.0);
+        setScale(2.4);
     }
 
     public AABB getAABB() {
@@ -49,8 +55,8 @@ public abstract class Ingredient {
 
     public double getScale() { return this.scale; } 
     public double getCollisionWidth() { return this.collisionWidth; };
-    public double getBaseline() { return this.baseline * getScale(); }
-    public double getSandwichHeight() { return this.sandwichHeight * getScale(); }
+    public double getBaseline() { return getScale() * this.baseline; }
+    public double getSandwichHeight() { return getScale() * this.sandwichHeight; }
 
     public void setActiveAABB(boolean active) { this.aabb.active = active; }
 
@@ -102,4 +108,18 @@ public abstract class Ingredient {
             e.drawLine(tempAABB.x1, topline, tempAABB.x2, topline, EngineFrame.VIOLET);
         }
     }
+
+    /**
+     * Behavior when interacting with a grabbable
+     * @param g The grabbable it will interact with
+     * @return whether the grabbable should merge or not
+     */
+    public abstract boolean hoverInteraction(Grabbable g);
+
+    /**
+     * Behavior when interacting with a grabbable
+     * @param g The grabbable it will interact with
+     * @return whether the grabbable should merge or not
+     */
+    public abstract boolean idleInteraction(Grabbable g);
 }

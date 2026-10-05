@@ -3,7 +3,7 @@ package ghostkitchen;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
-import ghostkitchen.scene.Restaurant;
+import ghostkitchen.scene.Menu;
 import ghostkitchen.scene.Scene;
 
 /**
@@ -17,7 +17,7 @@ public class Main extends EngineFrame {
     private static boolean debug = false;
 
     private Image icon;
-    private Scene restaurant;
+    private Scene menu;
     
     public Main() {
         
@@ -33,8 +33,6 @@ public class Main extends EngineFrame {
             false,               // sempre no topo               / always on top
             false                // fundo invisível              / invisible background
         );
-
-        ((Restaurant)this.restaurant).setUpCookingArea();
     }
     
     /**
@@ -48,7 +46,7 @@ public class Main extends EngineFrame {
     public void create() {
         icon = ImageUtils.loadImage("resources/images/icon.png");
         setWindowIcon( icon );
-        restaurant = new Restaurant(this);
+        menu = new Menu(this);
     }
 
     /**
@@ -65,7 +63,7 @@ public class Main extends EngineFrame {
      */
     @Override
     public void update( double delta ) {
-        restaurant.update(delta);
+        menu.update(delta);
     }
     
     /**
@@ -77,7 +75,7 @@ public class Main extends EngineFrame {
      */
     @Override
     public void draw() {
-        restaurant.draw();
+        menu.draw();
     }
     
     /**

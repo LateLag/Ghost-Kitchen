@@ -1,20 +1,19 @@
 package ghostkitchen.core.client;
 
-import java.util.List;
-
-import ghostkitchen.core.ingredient.BunBottom;
-import ghostkitchen.core.ingredient.BunTop;
-import ghostkitchen.core.ingredient.Cone;
-import ghostkitchen.core.ingredient.IceCreamStrawberry;
-import ghostkitchen.core.ingredient.Patty;
+import ghostkitchen.core.LayerPrefs;
+import ghostkitchen.core.item.BunBottom;
+import ghostkitchen.core.item.BunTop;
+import ghostkitchen.core.item.Cone;
+import ghostkitchen.core.item.IceCreamStrawberry;
+import ghostkitchen.core.item.Patty;
 
 public class Placeholder extends Client {
     public Placeholder() {
         super (
             "client.png",
-            List.of(BunBottom.class, Cone.class),
-            List.of(Patty.class, IceCreamStrawberry.class),
-            List.of(BunTop.class, IceCreamStrawberry.class)
+            new LayerPrefs(BunTop.class, IceCreamStrawberry.class),
+            new LayerPrefs(Patty.class, IceCreamStrawberry.class, null),
+            new LayerPrefs(BunBottom.class, Cone.class)
         );
     }
 }

@@ -1,4 +1,4 @@
-package ghostkitchen.core.ingredient;
+package ghostkitchen.core.item;
 
 public class IceCreamStrawberry extends Ingredient {
     public IceCreamStrawberry() {

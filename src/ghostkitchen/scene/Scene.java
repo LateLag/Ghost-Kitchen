@@ -7,6 +7,8 @@ import br.com.davidbuzatto.jsge.image.ImageUtils;
 import ghostkitchen.Main;
 
 public abstract class Scene {
+    protected static final double scale = 2.4;
+
     protected EngineFrame engine;
     protected Image background;
     protected Image foreground;
@@ -20,12 +22,17 @@ public abstract class Scene {
     public abstract void update(double delta);
 
     public void draw() {
-        Rectangle source = new Rectangle(0.0, 0.0, background.getWidth(), background.getHeight());
         Rectangle dest = new Rectangle(0.0, 0.0, engine.getScreenWidth(), engine.getScreenHeight());
-    
-        if(background != null) background.draw(engine, source, dest);
+
+        if(background != null) {
+            Rectangle src = new Rectangle(0.0, 0.0, background.getWidth(), background.getHeight());
+            background.draw(engine, src, dest);
+        }
         drawBefore();
-        if(foreground != null) foreground.draw(engine, source, dest);
+        if(foreground != null) {
+            Rectangle src = new Rectangle(0.0, 0.0, foreground.getWidth(), foreground.getHeight());
+            foreground.draw(engine, src, dest);
+        }
         drawAfter();
     }
 

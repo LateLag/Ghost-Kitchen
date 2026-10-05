@@ -6,13 +6,18 @@ import java.util.Iterator;
 
 import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
+import br.com.davidbuzatto.jsge.math.Vector2;
 import ghostkitchen.Main;
-import ghostkitchen.core.ingredient.Ingredient;
-import ghostkitchen.core.ingredient.Plate;
+import ghostkitchen.core.item.Item;
+import ghostkitchen.core.item.Plate;
 
-public class Grabbable implements Iterable<Ingredient> {
+public class Grabbable implements Iterable<Item> {
+    private static double gravity = 100.0;
+
     private AABB aabb;
-    private Deque<Ingredient> ingredients;
+    private Vector2 previousPos;
+    private Vector2 velocity;
+    private Deque<Item> items;
     private boolean grabbed;
 
     public Grabbable() {
@@ -23,46 +28,48 @@ public class Grabbable implements Iterable<Ingredient> {
         this(new Plate(), x, y);
     }
 
-    public Grabbable(Ingredient base) {
-        this.ingredients = new ArrayDeque<>();
+    public Grabbable(Item base) {
+        this.items = new ArrayDeque<>();
+        this.previousPos = new Vector2();
+        this.velocity = new Vector2();
         if(base != null) this.push(base);
     }
 
-    public Grabbable(Ingredient base, double x, double y) {
+    public Grabbable(Item base, double x, double y) {
         this(base);
         this.setPos(x, y);
     }
 
-    public void push(Ingredient ingredient) {
+    public void push(Item item) {
         if(isEmpty()) {
-            this.aabb = ingredient.getAABB();
+            this.aabb = item.getAABB();
             this.aabb.referencedObject = this;
         }
         else {
-            Ingredient prev = peek();
+            Item prev = peek();
             prev.setActiveAABB(false);
-            ingredient.setLocalPos(prev.getLocalPosX(), prev.getLocalPosY() - prev.getBaseline() - prev.getSandwichHeight() + ingredient.getBaseline());
+            item.setLocalPos(prev.getLocalPosX(), prev.getLocalPosY() - prev.getBaseline() - prev.getSandwichHeight() + item.getBaseline());
         }
-        resize(ingredient);
+        resize(item);
         //System.out.println("Stacked " + ingredient + " on " + this);
     }
 
-    public Ingredient pop() {
-        Ingredient popped = resize(ingredients.peekLast());
+    public Item pop() {
+        Item popped = resize(items.peekLast());
         if(!isEmpty()) peek().setActiveAABB(true);
         return popped;
     }
 
-    public Ingredient peek() {
-        return this.ingredients.peekLast();
+    public Item peek() {
+        return this.items.peekLast();
     }
 
     public int size() {
-        return this.ingredients.size();
+        return this.items.size();
     }
 
     public boolean isEmpty() {
-        return this.ingredients.isEmpty();
+        return this.items.isEmpty();
     }
 
     public Grabbable grab(double x, double y) {
@@ -72,7 +79,7 @@ public class Grabbable implements Iterable<Ingredient> {
         if(aabb.active) {
             Grabbable g = null;
             //If the point collides with the top ingredient, pop and return it instead
-            if(ingredients.size() > 1 && peek().getOffsetAABB(getPosX(), getPosY()).collidesWith(point)) {
+            if(items.size() > 1 && peek().getOffsetAABB(getPosX(), getPosY()).collidesWith(point)) {
                 g = new Grabbable(pop());
             }
             else if(aabb.collidesWith(point)) g = this;
@@ -85,79 +92,96 @@ public class Grabbable implements Iterable<Ingredient> {
 
     public void drop() {
         grabbed = false;
+        velocity.x = (getPosX() - previousPos.x) * 0.5;
+        velocity.y = (getPosY() - previousPos.y) * 0.5;
     }
 
-    public boolean merge(Grabbable g) {
+    public boolean interact(Grabbable g) {
         if(g == null) return false;
 
         if(!g.grabbed && aabb.active && g.aabb.active && aabb.collidesWith(g.aabb)) {
-            for(Ingredient i : this) {
-                g.push(i);
+            boolean merge = false;
+            for(Item i : this) {
+                merge = grabbed ? i.hoverInteraction(g) : i.idleInteraction(g);
             }
-            return true;
+            return merge;
         }
         return false;
     }
 
     public void update(double delta) {
+        setPreviousPos();
+        if(!grabbed) {
+            velocity.y += gravity * delta;
+            aabb.move(velocity.x, velocity.y);
+        }
     }
 
     public double getPosX() { return (this.aabb.x1 + this.aabb.x2) / 2.0; }
-    public double getPosY() { return (this.aabb.y2 - ingredients.getFirst().getHeight() / 2.0); }
+    public double getPosY() { return (this.aabb.y2 - items.getFirst().getHeight() / 2.0); }
 
     public void limitPos(AABB area) {
         if(area != null) {
             double distanceX = peek().getCollisionWidth() / 2.0;
-            double distanceY = ingredients.getFirst().getBaseline();
+            double distanceY = items.getFirst().getBaseline();
             setPos(
                 Math.max(area.x1 + distanceX, Math.min(area.x2 - distanceX, getPosX())),
                 Math.max(area.y1, Math.min(area.y2 + distanceY, getPosY()))
             );
+            if(previousPos.x == getPosX()) velocity.x *= -0.3;
+            if(previousPos.y == getPosY()) { velocity.y *= -0.3; velocity.x *= 0.5; }
         }
     }
 
     public void setPos(double posX, double posY) {
         aabb.x1 = posX - aabb.width / 2;
         aabb.x2 = posX + aabb.width / 2;
-        aabb.y2 = posY + ingredients.peekFirst().getHeight() / 2;
+        aabb.y2 = posY + items.peekFirst().getHeight() / 2;
         aabb.y1 = aabb.y2 - aabb.height;
     }
 
-    private Ingredient resize(Ingredient ingredient) {
-        if(ingredient != null) {
-            int previousSize = size();
-            Ingredient previousTop = peek();
-            boolean pop = ingredient == previousTop;
+    private void setPreviousPos() {
+        previousPos.x = getPosX();
+        previousPos.y = getPosY();
+    }
 
-            if(!pop) ingredients.add(ingredient);
+    private Item resize(Item item) {
+        if(item == null) return null;
 
-            //Intentionally uses the pre-addition value to ensure the AABB is only recalculated starting from the second addition
-            if(previousSize > 0) {
-                int amount = pop ? -1 : 1;
-                double posX = getPosX();
-                double previousY = previousTop.getAABB().y1;
-                double collisionWidth = previousTop.getCollisionWidth();
+        int currentSize = size();
+        Item currentTop = peek();
+        boolean pop = item == currentTop;
 
-                //Recalculate the average width
-                aabb.width = (aabb.width * previousSize + amount * ingredient.getWidth()) / (previousSize + amount);
+        if(!pop) items.add(item);
+
+        //Intentionally uses the pre-addition value to ensure the AABB is only recalculated starting from the second addition
+        if(currentSize > 0) {
+            int amount = pop ? -1 : 1;
+            double posX = getPosX();
+            double currentLocalY = currentTop.getAABB().y1;
+
+            //Recalculate the average width
+            if(currentSize + amount != 0) {
+                aabb.width = (aabb.width * currentSize + amount * item.getWidth()) / (currentSize + amount);
                 aabb.x1 = posX - aabb.width / 2;
                 aabb.x2 = posX + aabb.width / 2;
+            }
 
-                if(pop) {
-                    ingredient = ingredients.removeLast();
-                    ingredient.setLocalPos(0.0, 0.0);
-                    collisionWidth = ingredient.getWidth();
-                }
+            if(pop) {
+                item = items.removeLast();
+                item.setLocalPos(0.0, 0.0);
+                item.setCollisionWidth(item.getWidth());
+            }
+            else item.setCollisionWidth(Math.max(currentTop.getCollisionWidth(), item.getWidth()));
 
-                ingredient.setCollisionWidth(Math.max(collisionWidth, ingredient.getWidth()));
-
-                if(isEmpty()) return ingredient;
-                aabb.y1 += peek().getAABB().y1 - previousY;
+            //Set the new height after the deque has changed
+            if(!isEmpty()) {
+                aabb.y1 += peek().getAABB().y1 - currentLocalY;
                 aabb.height = aabb.y2 - aabb.y1;
             }
         }
 
-        return ingredient;
+        return item;
     }
 
     public void setActiveAABB(boolean active) { aabb.active = active; }
@@ -167,11 +191,13 @@ public class Grabbable implements Iterable<Ingredient> {
         double posX = getPosX();
         double posY = getPosY();
 
-        for(Ingredient i : ingredients) {
-            double layerAnimOffset = (-i.getLocalPosY()) / i.getScale();
+        for(Item i : items) {
+            double layerAnimOffset = -i.getLocalPosY() / i.getScale();
+            double offsetX = -velocity.x * 0.02 * layerAnimOffset;
+            double offsetY = velocity.y < 0.0 ? 0.0 : -velocity.y * 0.05 * layerAnimOffset;
 
             //Only animate when the grabbable is grabbed
-            i.draw(e, posX, posY, grabbed ? baseAnimOffset + layerAnimOffset : 0.0);
+            i.draw(e, posX + offsetX, posY + offsetY, grabbed ? baseAnimOffset + layerAnimOffset : 0.0);
         }
 
         if(Main.debug()) {
@@ -184,8 +210,8 @@ public class Grabbable implements Iterable<Ingredient> {
     }
 
     @Override
-    public Iterator<Ingredient> iterator() {
-        return this.ingredients.iterator();
+    public Iterator<Item> iterator() {
+        return this.items.iterator();
     }
 
     @Override
