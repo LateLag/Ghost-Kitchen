@@ -11,6 +11,7 @@ public class Placeholder extends Client {
     public Placeholder() {
         super (
             "client.png",
+            204, 12.0, 12.0,
             new LayerPrefs(BunTop.class, IceCreamStrawberry.class),
             new LayerPrefs(Patty.class, IceCreamStrawberry.class, null),
             new LayerPrefs(BunBottom.class, Cone.class)

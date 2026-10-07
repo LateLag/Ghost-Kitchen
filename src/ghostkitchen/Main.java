@@ -17,7 +17,7 @@ public class Main extends EngineFrame {
     private static boolean debug = false;
 
     private Image icon;
-    private Scene menu;
+    private Scene scene;
     
     public Main() {
         
@@ -46,7 +46,7 @@ public class Main extends EngineFrame {
     public void create() {
         icon = ImageUtils.loadImage("resources/images/icon.png");
         setWindowIcon( icon );
-        menu = new Menu(this);
+        scene = new Menu(this);
     }
 
     /**
@@ -63,7 +63,7 @@ public class Main extends EngineFrame {
      */
     @Override
     public void update( double delta ) {
-        menu.update(delta);
+        scene.update(delta);
     }
     
     /**
@@ -75,7 +75,7 @@ public class Main extends EngineFrame {
      */
     @Override
     public void draw() {
-        menu.draw();
+        scene.draw();
     }
     
     /**
@@ -97,6 +97,11 @@ public class Main extends EngineFrame {
         }
 
         return false;
+    }
+
+    public void setScene(Scene scene) {
+        this.scene = scene;
+        this.scene.setup();
     }
 
     public static boolean debug() { return debug; }

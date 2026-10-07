@@ -6,26 +6,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import ghostkitchen.core.item.Ingredient;
+import ghostkitchen.core.item.Item;
 import ghostkitchen.util.ItemUtils;
 
-public record LayerPrefs(List<Class<? extends Ingredient>> ingredients) {
+public record LayerPrefs(List<Class<? extends Item>> items) {
     public LayerPrefs {
-        ingredients = ingredients == null ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(ingredients));
+        items = items == null ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(items));
     }
 
     @SafeVarargs
-    public LayerPrefs(Class<? extends Ingredient> ... ingredients) {
-        this(ingredients == null ? null : Arrays.asList(ingredients));
+    public LayerPrefs(Class<? extends Item> ... items) {
+        this(items == null ? null : Arrays.asList(items));
     }
 
-    public Ingredient pickRandom() {
-        if(ingredients.isEmpty()) return null;
+    public Item pickRandom() {
+        if(items.isEmpty()) return null;
 
         //Pick a random possible ingredient from the list
-        Class<? extends Ingredient> type = ingredients.get(ThreadLocalRandom.current().nextInt(ingredients.size()));
+        Class<? extends Item> type = items.get(ThreadLocalRandom.current().nextInt(items.size()));
         if(type == null) return null;
 
-        return (Ingredient)ItemUtils.instantiateItem(type);
+        return ItemUtils.instantiateItem(type);
     }
 }

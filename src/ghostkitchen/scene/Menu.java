@@ -4,61 +4,49 @@ import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
+import ghostkitchen.Main;
 import ghostkitchen.scene.button.Button;
 import ghostkitchen.scene.button.SceneChanger;
 
 public class Menu extends Scene {
+    private Image restaurant;
     private Image rollUpDoor;
     private Image cabinetDoor;
-    private Scene gameScene;
     private Button playButton;
 
     public Menu(EngineFrame e) {
-        super(e, null, "restaurant.png");
-        this.rollUpDoor = ImageUtils.loadImage("resources/images/scene/roll_up_door.png");
-        this.cabinetDoor = ImageUtils.loadImage("resources/images/scene/cabinet_door.png");
-        this.playButton = new SceneChanger("play.png", 768.0, 472.0, 120.0, 40.0, new Restaurant(e));
+        super(e);
+        this.restaurant = ImageUtils.loadImage(imgPath + "restaurant.png");
+        this.rollUpDoor = ImageUtils.loadImage(imgPath + "roll_up_door.png");
+        this.cabinetDoor = ImageUtils.loadImage(imgPath + "cabinet_door.png");
+        this.playButton = new SceneChanger((Main)e, new Restaurant(e), "generic.png", 768.0, 484.0, 120.0, 40.0);
     }
 
+    @Override
     public void update(double delta) {
-        if(gameScene == null) {
-            Object o = playButton.tryInteraction(engine);
-            if(o instanceof Scene) {
-                if(o instanceof Restaurant) ((Restaurant)o).resetCookingArea();
-                gameScene = (Scene)o;
-            }
-        }
-        else gameScene.update(delta);
+        playButton.tryInteraction(engine);
     }
 
     @Override
     public void draw() {
-        if(gameScene == null) super.draw();
-        else gameScene.draw();
-    }
-
-    @Override
-    public void drawBefore() {
-        super.drawBefore();
-
-        double scaledWidth = rollUpDoor.getWidth() * scale;
-        double scaledHeight = rollUpDoor.getHeight() * scale;
-
+        //Roll up door
         Rectangle src = new Rectangle(0.0, 0.0, rollUpDoor.getWidth(), rollUpDoor.getHeight());
-        Rectangle dest = new Rectangle((engine.getScreenWidth() - scaledWidth) / 2, 0.0, scaledWidth, scaledHeight);
-
+        Rectangle dest = new Rectangle((engine.getScreenWidth() - rollUpDoor.getWidth() * scale) / 2, 0.0, rollUpDoor.getWidth() * scale, rollUpDoor.getHeight() * scale);
         rollUpDoor.draw(engine, src, dest);
-    }
 
-    @Override
-    public void drawAfter() {
+        //Background
+        src = new Rectangle(0.0, 0.0, restaurant.getWidth(), restaurant.getHeight());
+        dest = new Rectangle(0.0, 0.0, engine.getScreenWidth(), engine.getScreenHeight());
+        restaurant.draw(engine, src, dest);
+
+        //Cabinet doors
         double halfStroke = 2.0 * scale;
         double scaledWidth = cabinetDoor.getWidth() * scale;
         double scaledHeight = cabinetDoor.getHeight() * scale;
 
         //Left cabinet door
-        Rectangle src = new Rectangle(0.0, 0.0, cabinetDoor.getWidth(), cabinetDoor.getHeight());
-        Rectangle dest = new Rectangle(engine.getScreenWidth() / 2 + halfStroke - scaledWidth, engine.getScreenHeight() - scaledHeight, scaledWidth, scaledHeight);
+        src = new Rectangle(0.0, 0.0, cabinetDoor.getWidth(), cabinetDoor.getHeight());
+        dest = new Rectangle(engine.getScreenWidth() / 2 + halfStroke - scaledWidth, engine.getScreenHeight() - scaledHeight, scaledWidth, scaledHeight);
         cabinetDoor.draw(engine, src, dest);
 
         //Right cabinet door
@@ -67,6 +55,6 @@ public class Menu extends Scene {
 
         playButton.draw(engine);
 
-        super.drawAfter();
+        super.draw();
     }
 }

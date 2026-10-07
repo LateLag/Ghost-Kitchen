@@ -5,34 +5,46 @@ import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
+import ghostkitchen.Main;
+import ghostkitchen.util.PanelUtils;
 
-public abstract class Button {
-    private static final double scale = 2.4;
+public class Button {
+    protected static final double scale = 2.4;
+    protected static final String imgPath = "resources/images/scene/nineslice/";
 
-    private Image image;
-    private int strokeSize;
+    protected Image image;
+    protected int borderSize;
     protected AABB aabb;
     protected boolean hovered;
+    protected ButtonAction pressAction;
+    protected ButtonAction releaseAction;
+    protected ButtonAction hoverAction;
 
-    public Button(String image, int strokeSize, double x1, double y1, double x2, double y2) {
-        this.image = ImageUtils.loadImage("resources/images/scene/nineslice/" + image);
-        this.strokeSize = strokeSize;
-        this.aabb = new AABB(x1, y1, x2, y2, this);
-        this.hovered = false;
+    public Button(double x, double y) {
+        this("generic.png", 4, x - 50.0, y - 50.0, x + 50.0, y + 50.0);
     }
 
-    public Object tryInteraction(EngineFrame e) {
+    public Button(String image, int borderSize, double x1, double y1, double x2, double y2) {
+        this.image = ImageUtils.loadImage(imgPath + image);
+        this.borderSize = borderSize;
+        this.aabb = new AABB(x1, y1, x2, y2, this);
+        this.hovered = false;
+        setHoverAction(() -> { hovered = true; });
+    }
+
+    public void setPressAction(ButtonAction pressAction) { this.pressAction = pressAction; }
+    public void setReleaseAction(ButtonAction releaseAction) { this.releaseAction = releaseAction; }
+    public void setHoverAction(ButtonAction hoverAction) { this.hoverAction = hoverAction; }
+
+    public void tryInteraction(EngineFrame e) {
         AABB point = new AABB(e.getMouseX(), e.getMouseY(), e.getMouseX(), e.getMouseY(), null);
 
         if(aabb.active && aabb.collidesWith(point)) {
-            if(e.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) return onClick();
-            else if(e.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) return onRelease();
-            else if(e.isMouseButtonDown(EngineFrame.MOUSE_BUTTON_LEFT)) hovered = false;
-            else hovered = true;
+            if(pressAction != null && e.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) pressAction.onInteraction();
+            else if(releaseAction != null && e.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) releaseAction.onInteraction();
+            else if(hoverAction != null) hoverAction.onInteraction();
         }
         else hovered = false;
-
-        return null;
     }
 
     protected void setPos(double x, double y) {
@@ -47,116 +59,10 @@ public abstract class Button {
         return (aabb.y1 + aabb.y2) / 2;
     }
 
-    public abstract Object onClick();
-    public abstract Object onRelease();
-
     public void draw(EngineFrame e) {
-        int imgWidth = image.getWidth();
-        int imgHeight = image.getHeight();
-        double scaledSize = scale * strokeSize;
-        double halvedSize = scaledSize / 2;
-        Rectangle src = new Rectangle();
-        Rectangle dest = new Rectangle();
-
         double hoverZoom = hovered ? scale : 0.0;
-
-        //Center
-        src.x = strokeSize;
-        src.y = strokeSize;
-        src.width = imgWidth - strokeSize * 2;
-        src.height = imgHeight - strokeSize * 2;
-        dest.x = aabb.x1 + halvedSize - hoverZoom;
-        dest.y = aabb.y1 + halvedSize - hoverZoom;
-        dest.width = aabb.width - scaledSize + hoverZoom * 2;
-        dest.height = aabb.height - scaledSize + hoverZoom * 2;
-        image.draw(e, src, dest);
-
-        //Top stroke
-        src.x = strokeSize;
-        src.y = 0.0;
-        src.width = imgWidth - strokeSize * 2;
-        src.height = strokeSize;
-        dest.x = aabb.x1 + halvedSize - hoverZoom;
-        dest.y = aabb.y1 - halvedSize - hoverZoom;
-        dest.width = aabb.width - scaledSize + hoverZoom * 2;
-        dest.height = scaledSize;
-        image.draw(e, src, dest);
-
-        //Left stroke
-        src.x = 0.0;
-        src.y = strokeSize;
-        src.width = strokeSize;
-        src.height = imgHeight - strokeSize * 2;
-        dest.x = aabb.x1 - halvedSize - hoverZoom;
-        dest.y = aabb.y1 + halvedSize - hoverZoom;
-        dest.width = scaledSize;
-        dest.height = aabb.height - scaledSize + hoverZoom * 2;
-        image.draw(e, src, dest);
-
-        //Right stroke
-        src.x = imgWidth - strokeSize;
-        src.y = strokeSize;
-        src.width = strokeSize;
-        src.height = imgHeight - strokeSize * 2;
-        dest.x = aabb.x2 - halvedSize + hoverZoom;
-        dest.y = aabb.y1 + halvedSize - hoverZoom;
-        dest.width = scaledSize;
-        dest.height = aabb.height - scaledSize + hoverZoom * 2;
-        image.draw(e, src, dest);
-
-        //Bottom stroke
-        src.x = strokeSize;
-        src.y = imgHeight - strokeSize;
-        src.width = imgWidth - strokeSize * 2;
-        src.height = strokeSize;
-        dest.x = aabb.x1 + halvedSize - hoverZoom;
-        dest.y = aabb.y2 - halvedSize + hoverZoom;
-        dest.width = aabb.width - scaledSize + hoverZoom * 2;
-        dest.height = scaledSize;
-        image.draw(e, src, dest);
-
-        //Top left corner
-        src.x = 0.0;
-        src.y = 0.0;
-        src.width = strokeSize;
-        src.height = strokeSize;
-        dest.x = aabb.x1 - halvedSize - hoverZoom;
-        dest.y = aabb.y1 - halvedSize - hoverZoom;
-        dest.width = scaledSize;
-        dest.height = scaledSize;
-        image.draw(e, src, dest);
-        
-        //Top right corner
-        src.x = imgWidth - strokeSize;
-        src.y = 0.0;
-        src.width = strokeSize;
-        src.height = strokeSize;
-        dest.x = aabb.x2 - halvedSize + hoverZoom;
-        dest.y = aabb.y1 - halvedSize - hoverZoom;
-        dest.width = scaledSize;
-        dest.height = scaledSize;
-        image.draw(e, src, dest);
-
-        //Bottom left corner
-        src.x = 0.0;
-        src.y = imgHeight - strokeSize;
-        src.width = strokeSize;
-        src.height = strokeSize;
-        dest.x = aabb.x1 - halvedSize - hoverZoom;
-        dest.y = aabb.y2 - halvedSize + hoverZoom;
-        dest.width = scaledSize;
-        dest.height = scaledSize;
-        image.draw(e, src, dest);
-
-        //Bottom right corner
-        src.x = imgWidth - strokeSize;
-        src.y = imgHeight - strokeSize;
-        src.width = strokeSize;
-        src.height = strokeSize;
-        dest.x = aabb.x2 - halvedSize + hoverZoom;
-        dest.y = aabb.y2 - halvedSize + hoverZoom;
-        dest.width = scaledSize;
-        dest.height = scaledSize;
-        image.draw(e, src, dest);
+        double scaledStroke = scale * 4;
+        PanelUtils.drawNineSlice(e, image, new Rectangle(aabb.x1 - scaledStroke / 2 - hoverZoom, aabb.y1 - scaledStroke / 2 - hoverZoom, aabb.width + scaledStroke + hoverZoom * 2, aabb.height + scaledStroke + hoverZoom * 2), borderSize);
+        if(Main.debug()) aabb.draw(e, EngineFrame.LIME);
     }
 }

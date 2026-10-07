@@ -55,7 +55,7 @@ public class Grabbable implements Iterable<Item> {
     }
 
     public Item pop() {
-        Item popped = resize(items.peekLast());
+        Item popped = resize(peek());
         if(!isEmpty()) peek().setActiveAABB(true);
         return popped;
     }
@@ -72,22 +72,26 @@ public class Grabbable implements Iterable<Item> {
         return this.items.isEmpty();
     }
 
-    public Grabbable grab(double x, double y) {
-        AABB point = new AABB(x, y, x, y, null);
+    public Grabbable getFromCoordinates(double x, double y) {
+        return getFromCollision(new AABB(x, y, x, y, null));
+    }
 
+    public Grabbable getFromCollision(AABB aabb) {
         //Only attempts a grab if the AABB is active
-        if(aabb.active) {
+        if(this.aabb.active) {
             Grabbable g = null;
             //If the point collides with the top ingredient, pop and return it instead
-            if(items.size() > 1 && peek().getOffsetAABB(getPosX(), getPosY()).collidesWith(point)) {
+            if(size() > 1 && peek().getOffsetAABB(getPosX(), getPosY()).collidesWith(aabb)) {
                 g = new Grabbable(pop());
             }
-            else if(aabb.collidesWith(point)) g = this;
-
-            if(g != null) g.grabbed = true;
+            else if(this.aabb.collidesWith(aabb)) g = this;
             return g;
         }
         return null;
+    }
+
+    public void grab() {
+        grabbed = true;
     }
 
     public void drop() {
@@ -115,6 +119,10 @@ public class Grabbable implements Iterable<Item> {
             velocity.y += gravity * delta;
             aabb.move(velocity.x, velocity.y);
         }
+    }
+
+    public boolean isInstanceOf(Class<? extends Item> item) {
+        return size() == 1 && peek().getClass() == item;
     }
 
     public double getPosX() { return (this.aabb.x1 + this.aabb.x2) / 2.0; }
