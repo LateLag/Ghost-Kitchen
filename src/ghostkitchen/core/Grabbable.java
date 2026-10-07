@@ -19,6 +19,7 @@ public class Grabbable implements Iterable<Item> {
     private Vector2 velocity;
     private Deque<Item> items;
     private boolean grabbed;
+    private boolean potentialMainDish;
 
     public Grabbable() {
         this(0.0, 0.0);
@@ -32,7 +33,10 @@ public class Grabbable implements Iterable<Item> {
         this.items = new ArrayDeque<>();
         this.previousPos = new Vector2();
         this.velocity = new Vector2();
-        if(base != null) this.push(base);
+        if(base != null) {
+            this.push(base);
+            if(base.getClass() == Plate.class) potentialMainDish = true;
+        }
     }
 
     public Grabbable(Item base, double x, double y) {
@@ -124,6 +128,9 @@ public class Grabbable implements Iterable<Item> {
     public boolean isInstanceOf(Class<? extends Item> item) {
         return size() == 1 && peek().getClass() == item;
     }
+
+    public void setAsPotentialMainDish() { potentialMainDish = true; }
+    public boolean isPotentialMainDish() { return potentialMainDish; }
 
     public double getPosX() { return (this.aabb.x1 + this.aabb.x2) / 2.0; }
     public double getPosY() { return (this.aabb.y2 - items.getFirst().getHeight() / 2.0); }

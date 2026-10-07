@@ -28,7 +28,7 @@ public class Main extends EngineFrame {
             60,                  // quadros por segundo desejado / target FPS
             true,                // suavização                   / antialiasing
             false,               // redimensionável              / resizable
-            true,               // tela cheia                   / full screen
+            false,               // tela cheia                   / full screen
             false,               // sem decoração                / undecorated
             false,               // sempre no topo               / always on top
             false                // fundo invisível              / invisible background
@@ -46,7 +46,7 @@ public class Main extends EngineFrame {
     public void create() {
         icon = ImageUtils.loadImage("resources/images/icon.png");
         setWindowIcon( icon );
-        scene = new Menu(this);
+        setScene(new Menu(this));
     }
 
     /**

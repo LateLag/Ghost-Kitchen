@@ -60,8 +60,6 @@ public class Order {
     }
 
     public boolean validateNext(Item i) {
-        if(i == null) return false;
-
         if(validation.size() <= dish.size()) {
             int index = dish.size() - 1 - validation.size();
             if(i == null || index < 0) validation.add(false);

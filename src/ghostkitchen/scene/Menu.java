@@ -19,7 +19,11 @@ public class Menu extends Scene {
         this.restaurant = ImageUtils.loadImage(imgPath + "restaurant.png");
         this.rollUpDoor = ImageUtils.loadImage(imgPath + "roll_up_door.png");
         this.cabinetDoor = ImageUtils.loadImage(imgPath + "cabinet_door.png");
-        this.playButton = new SceneChanger((Main)e, new Restaurant(e), "generic.png", 768.0, 484.0, 120.0, 40.0);
+    }
+
+    @Override
+    public void setup() {
+        playButton = new SceneChanger((Main)engine, new Restaurant(engine), "generic.png", engine.getScreenWidth() / 2, engine.getScreenHeight() * 121.0 / 216.0, 120.0, 40.0);
     }
 
     @Override

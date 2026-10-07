@@ -68,7 +68,9 @@ public class Restaurant extends Scene {
     @Override
     public void setup() {
         grabbables.clear();
-        cookingArea = new AABB(80.0, -280.0, (double)(engine.getWidth() - 80), (double)(engine.getHeight() - 280), this);
+        cookingArea = new AABB(80.0, -280.0, (double)(engine.getScreenWidth() - 80), (double)(engine.getScreenHeight() - 280), this);
+        spawnItem(new Plate(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y2);
+        spawnItem(new Plate(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y2);
         spawnItem(new Plate(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y2);
         dish = grabbables.getFirst();
         buttons = new ArrayList<>();
@@ -115,7 +117,7 @@ public class Restaurant extends Scene {
             if(index >= 0) grabbables.add(grabbables.remove(index));
             else grabbables.add(g);
 
-            if(g.isInstanceOf(Plate.class)) dish = g;
+            if(g.isPotentialMainDish()) dish = g;
         }
         grabbed = g;
     }
@@ -126,9 +128,12 @@ public class Restaurant extends Scene {
             appraisalTimer = appraisalTime;
 
             if(dish.size() > 1) {
-                double offsetY = dish.peek().getLocalPosY();
-                setGrabbed(new Grabbable(dish.pop()));
-                grabbed.setPos(dish.getPosX(), dish.getPosY() + offsetY);
+                Item i = dish.peek();
+                if(!(i instanceof Plate)) {
+                    double offsetY = i.getLocalPosY();
+                    setGrabbed(new Grabbable(dish.pop()));
+                    grabbed.setPos(dish.getPosX(), dish.getPosY() + offsetY);
+                }
             }
         }
     }
@@ -149,7 +154,7 @@ public class Restaurant extends Scene {
                 grabbables.remove(grabbed);
                 appraisalTimer = appraisalTime;
 
-                if(dish.size() > 1 && dish.peek().getClass() != Plate.class) {
+                if(dish.size() > 1 && !(dish.peek() instanceof Plate)) {
                     double offsetY = dish.peek().getLocalPosY();
                     setGrabbed(new Grabbable(dish.pop()));
                     grabbed.setPos(dish.getPosX(), dish.getPosY() + offsetY);
@@ -192,7 +197,7 @@ public class Restaurant extends Scene {
                 Grabbable other = grabbables.get(j);
                 boolean merge = g.interact(other);
                 if(merge) {
-                    if(g == dish) dish = other;
+                    if(other.isPotentialMainDish()) dish = other;
                     grabbables.remove(i);
                     break;
                 }
