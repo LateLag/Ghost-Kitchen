@@ -18,6 +18,7 @@ import ghostkitchen.core.client.Client;
 import ghostkitchen.core.client.Placeholder;
 import ghostkitchen.core.item.Bun;
 import ghostkitchen.core.item.Cheese;
+import ghostkitchen.core.item.Coin;
 import ghostkitchen.core.item.Cone;
 import ghostkitchen.core.item.IceCreamStrawberry;
 import ghostkitchen.core.item.Item;
@@ -110,7 +111,7 @@ public class Restaurant extends Scene {
     public Grabbable getGrabbed() { return grabbed; }
 
     public void setGrabbed(Grabbable g) {
-        if(grabbed != null) grabbed.drop();
+        if(grabbed != null && g != grabbed) grabbed.drop();
         if(g != null) {
             g.grab();
             int index = grabbables.indexOf(g);
@@ -127,6 +128,7 @@ public class Restaurant extends Scene {
             lockedInteractions = true;
             appraisalTimer = appraisalTime;
 
+            setGrabbed(null);
             if(dish.size() > 1) {
                 Item i = dish.peek();
                 if(!(i instanceof Plate)) {
@@ -166,7 +168,7 @@ public class Restaurant extends Scene {
                 queueOffset -= orderSpacing;
                 int score = orders.poll().getValidityScore();
                 for(int i = 0; i < score; i++) {
-                    spawnItem(new Bun(), 0, 0);
+                    spawnItem(new Coin(), engine.getScreenWidth() / 2, engine.getScreenHeight() / 2);
                 }
             }
         }
@@ -176,14 +178,7 @@ public class Restaurant extends Scene {
         //TODO: Order generation logic
         if(engine.isKeyPressed(EngineFrame.KEY_ZERO)) generateOrder();
 
-        boolean interact = false;
-        if(!lockedInteractions) {
-            if(engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) interact = true;
-
-            for(int i = buttons.size() - 1; i >= 0; i--) {
-                buttons.get(i).tryInteraction(engine);
-            }
-        }
+        boolean interact = !lockedInteractions ? engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT) : false;
 
         //Update logic for all grabbables. Order is reversed to ensure the most recently interacted with grabbables are prioritized
         for(int i = grabbables.size() - 1; i >= 0; i--) {
@@ -205,6 +200,12 @@ public class Restaurant extends Scene {
 
             g.update(delta);
             g.limitPos(cookingArea);
+        }
+
+        if(!lockedInteractions) {
+            for(int i = buttons.size() - 1; i >= 0; i--) {
+                buttons.get(i).tryInteraction(engine);
+            }
         }
 
         //Update logic for the grabbed grabbable

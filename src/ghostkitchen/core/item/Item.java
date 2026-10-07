@@ -21,6 +21,7 @@ public abstract class Item {
     private int baseline;
     private int sandwichHeight;
     private double scale;
+    protected boolean mixable;
 
     protected Item(String image, int width, int height, int baseline) {
         this(image, width, height, baseline, 0);

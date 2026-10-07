@@ -5,6 +5,7 @@ import ghostkitchen.core.Grabbable;
 public abstract class Ingredient extends Item {
     protected Ingredient(String image, int width, int height, int baseline, int sandwichHeight) {
         super(image, width, height, baseline, sandwichHeight);
+        this.mixable = true;
     }
 
     @Override
@@ -14,7 +15,8 @@ public abstract class Ingredient extends Item {
 
     @Override
     public boolean idleInteraction(Grabbable g) {
-        if(g.peek().getSandwichHeight() != 0.0) {
+        Item i = g.peek();
+        if(i.mixable && mixable || i.getClass() == getClass()) {
             g.push(this);
             return true;
         }
