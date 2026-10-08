@@ -3,10 +3,10 @@ package ghostkitchen.scene;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import ghostkitchen.Main;
+import ghostkitchen.core.ImageCache;
 
-public abstract class Scene {
+public abstract class Scene implements ImageCache {
     protected static final double scale = 2.4;
-    protected static final String imgPath = "resources/images/scene/";
 
     protected EngineFrame engine;
 

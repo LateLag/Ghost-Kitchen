@@ -17,4 +17,7 @@ public class Placeholder extends Client {
             new LayerPrefs(BunBottom.class, Cone.class)
         );
     }
+
+    @Override
+    public String toString() { return "Placeholder"; }
 }

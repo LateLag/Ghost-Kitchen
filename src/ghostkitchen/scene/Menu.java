@@ -3,7 +3,6 @@ package ghostkitchen.scene;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
-import br.com.davidbuzatto.jsge.image.ImageUtils;
 import ghostkitchen.Main;
 import ghostkitchen.scene.button.Button;
 import ghostkitchen.scene.button.SceneChanger;
@@ -12,18 +11,19 @@ public class Menu extends Scene {
     private Image restaurant;
     private Image rollUpDoor;
     private Image cabinetDoor;
+
     private Button playButton;
 
     public Menu(EngineFrame e) {
         super(e);
-        this.restaurant = ImageUtils.loadImage(imgPath + "restaurant.png");
-        this.rollUpDoor = ImageUtils.loadImage(imgPath + "roll_up_door.png");
-        this.cabinetDoor = ImageUtils.loadImage(imgPath + "cabinet_door.png");
+        this.restaurant = getImage("scene/restaurant.png");
+        this.rollUpDoor = getImage("scene/roll_up_door.png");
+        this.cabinetDoor = getImage("scene/cabinet_door.png");
     }
 
     @Override
     public void setup() {
-        playButton = new SceneChanger((Main)engine, new Restaurant(engine), "generic.png", engine.getScreenWidth() / 2, engine.getScreenHeight() * 121.0 / 216.0, 120.0, 40.0);
+        playButton = new SceneChanger(engine.getScreenWidth() / 2, engine.getScreenHeight() * 121.0 / 216.0, 120.0, 40.0, (Main)engine, new Restaurant(engine, this));
     }
 
     @Override

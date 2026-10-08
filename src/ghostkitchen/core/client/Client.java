@@ -6,21 +6,21 @@ import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
-import br.com.davidbuzatto.jsge.image.ImageUtils;
 import ghostkitchen.Main;
 import ghostkitchen.core.LayerPrefs;
+import ghostkitchen.core.ImageCache;
 import ghostkitchen.util.AABBUtils;
 
-public abstract class Client {
+public abstract class Client implements ImageCache {
     private static final int maxAnger = 3;
 
-    private Image image;
+    protected Image image;
     private List<LayerPrefs> layerPrefs;
     private AABB mouth;
     private int anger;
 
     protected Client(String image, double mouthY, double mouthWidth, double mouthHeight, LayerPrefs ... layers) {
-        this.image = ImageUtils.loadImage("resources/images/clients/" + image);
+        this.image = getImage("clients/" + image);
         this.layerPrefs = List.of(layers).reversed();
         this.mouth = new AABB(-mouthWidth / 2, -mouthY - mouthHeight / 2, mouthWidth / 2, -mouthY + mouthHeight / 2, this);
         this.anger = 0;
@@ -61,7 +61,4 @@ public abstract class Client {
             aabb.draw(e, EngineFrame.MAGENTA);
         }
     }
-
-    @Override
-    public String toString() { return "Placeholder"; }
 }

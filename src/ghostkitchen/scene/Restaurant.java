@@ -10,13 +10,15 @@ import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
-import br.com.davidbuzatto.jsge.image.ImageUtils;
 import ghostkitchen.Main;
 import ghostkitchen.core.Grabbable;
 import ghostkitchen.core.Order;
 import ghostkitchen.core.client.Client;
 import ghostkitchen.core.client.Placeholder;
+import ghostkitchen.core.item.Bell;
 import ghostkitchen.core.item.Bun;
+import ghostkitchen.core.item.BunBottom;
+import ghostkitchen.core.item.BunTop;
 import ghostkitchen.core.item.Cheese;
 import ghostkitchen.core.item.Coin;
 import ghostkitchen.core.item.Cone;
@@ -26,19 +28,22 @@ import ghostkitchen.core.item.Knife;
 import ghostkitchen.core.item.Patty;
 import ghostkitchen.core.item.Plate;
 import ghostkitchen.scene.button.Button;
+import ghostkitchen.scene.button.CustomAction;
 import ghostkitchen.scene.button.ItemDispenser;
-import ghostkitchen.scene.button.ItemGenerator;
 
 public class Restaurant extends Scene {
     private static final double doorOpeningTime = 0.5;
     private static final double appraisalTime = 1.0;
     private static final double orderSpacing = 156.0;
 
-    private boolean lockedInteractions;
     private Image park;
     private Image restaurant;
     private Image rollUpDoor;
     private Image cabinetDoor;
+    private boolean appraising;
+    private boolean finishedAppraisal;
+    private boolean gameOver;
+    private double orderTimer;
     private double doorTimer;
     private double queueOffset;
     private double appraisalTimer;
@@ -49,47 +54,42 @@ public class Restaurant extends Scene {
     private Grabbable grabbed;
     private Grabbable dish;
     private AABB cookingArea;
+    private CustomAction returnToMenu;
 
-    public Restaurant(EngineFrame e) {
+    public Restaurant(EngineFrame e, Scene menu) {
         super(e);
+        this.park = getImage("scene/park.png");
+        this.restaurant = getImage("scene/restaurant.png");
+        this.rollUpDoor = getImage("scene/roll_up_door.png");
+        this.cabinetDoor = getImage("scene/cabinet_door.png");
         this.doorTimer = doorOpeningTime;
         this.appraisalTimer = appraisalTime * 2;
-        this.lockedInteractions = false;
-        this.park = ImageUtils.loadImage(imgPath + "park.png");
-        this.restaurant = ImageUtils.loadImage(imgPath + "restaurant.png");
-        this.rollUpDoor = ImageUtils.loadImage(imgPath + "roll_up_door.png");
-        this.cabinetDoor = ImageUtils.loadImage(imgPath + "cabinet_door.png");
+        this.appraising = false;
+        this.gameOver = false;
         this.grabbables = new LinkedList<>();
         this.orders = new LinkedList<>();
         this.clients = new Client[] {
             new Placeholder()
+        };
+
+        this.returnToMenu = () -> {
+            ((Main)e).setScene(menu);
         };
     }
 
     @Override
     public void setup() {
         grabbables.clear();
-        cookingArea = new AABB(80.0, -280.0, (double)(engine.getScreenWidth() - 80), (double)(engine.getScreenHeight() - 280), this);
-        spawnItem(new Plate(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y2);
-        spawnItem(new Plate(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y2);
-        spawnItem(new Plate(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y2);
-        dish = grabbables.getFirst();
+        cookingArea = new AABB(80.0, -80.0, (double)(engine.getScreenWidth() - 80), (double)(engine.getScreenHeight() - 280), this);
         buttons = new ArrayList<>();
         double space = 154.0;
         double pos = engine.getWidth() / 2 - space * 5;
-        buttons.add(new ItemGenerator(this, Bun.class, pos += space, 768));
-        buttons.add(new ItemGenerator(this, Patty.class, pos += space, 768));
-        buttons.add(new ItemGenerator(this, Cheese.class, pos += space, 768));
-        buttons.add(new ItemGenerator(this, Cone.class, pos += space, 768));
-        buttons.add(new ItemGenerator(this, IceCreamStrawberry.class, pos += space, 768));
+        buttons.add(new ItemDispenser(this, Bun.class, pos += space, 768));
+        buttons.add(new ItemDispenser(this, Patty.class, pos += space, 768));
+        buttons.add(new ItemDispenser(this, Cheese.class, pos += space, 768));
+        buttons.add(new ItemDispenser(this, Cone.class, pos += space, 768));
+        buttons.add(new ItemDispenser(this, IceCreamStrawberry.class, pos += space, 768));
         buttons.add(new ItemDispenser(this, Knife.class, pos += space + space / 2, 768, 120 + space, 120.0));
-
-        //TODO: real finish action
-        Button b = new Button(200, 500);
-        b.setPressAction(() -> {
-            startAppraisal();
-        });
-        buttons.add(b);
     }
 
     public void spawnItem(Item item, double posX, double posY) {
@@ -123,62 +123,102 @@ public class Restaurant extends Scene {
         grabbed = g;
     }
 
-    public void startAppraisal() {
-        if(!orders.isEmpty() && dish != null) {
-            lockedInteractions = true;
-            appraisalTimer = appraisalTime;
+    public void scheduleAppraisal() {
+        appraising = orders.isEmpty() || dish == null ? false : true;
 
-            setGrabbed(null);
-            if(dish.size() > 1) {
-                Item i = dish.peek();
-                if(!(i instanceof Plate)) {
-                    double offsetY = i.getLocalPosY();
-                    setGrabbed(new Grabbable(dish.pop()));
-                    grabbed.setPos(dish.getPosX(), dish.getPosY() + offsetY);
-                }
-            }
+        if(appraising) {
+            finishedAppraisal = false;
+            appraisalTimer = appraisalTime;
         }
     }
 
     public void update(double delta) {
-        //Timer that controls the door opening progress at the start
-        if(doorTimer > 0.0) {
-            doorTimer -= delta;
-            if(doorTimer < 0.0) doorTimer = 0.0;
-        }
+        boolean interact = !appraising ? engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT) : false;
 
-        //Appraisal logic
-        if(lockedInteractions) {
-            appraisalTimer -= delta;
+        //The game is lost when the next order in the queue is no longer visible on screen
+        if(queueOffset >= orderSpacing * 11) gameOver = true;
 
-            if(appraisalTimer <= 0.0 && appraisalTimer > -appraisalTime) {
-                orders.peek().validateNext(grabbed == null ? null : grabbed.peek());
-                grabbables.remove(grabbed);
-                appraisalTimer = appraisalTime;
-
-                if(dish.size() > 1 && !(dish.peek() instanceof Plate)) {
-                    double offsetY = dish.peek().getLocalPosY();
-                    setGrabbed(new Grabbable(dish.pop()));
-                    grabbed.setPos(dish.getPosX(), dish.getPosY() + offsetY);
-                }
-                else appraisalTimer = -appraisalTime;
-            }
-            else if(appraisalTimer <= -2.0 * appraisalTime) {
-                lockedInteractions = false;
-                queueOffset -= orderSpacing;
-                int score = orders.poll().getValidityScore();
-                for(int i = 0; i < score; i++) {
-                    spawnItem(new Coin(), engine.getScreenWidth() / 2, engine.getScreenHeight() / 2);
+        if(gameOver) {
+            //Timer that controls the door opening animation progress at the start and end
+            if(doorTimer < doorOpeningTime) {
+                doorTimer += delta;
+                if(doorTimer > doorOpeningTime) {
+                    doorTimer = doorOpeningTime;
+                    returnToMenu.onTrigger();
                 }
             }
+
+            interact = false;
+            if(grabbed != null) setGrabbed(null);
         }
+        else {
+            if(doorTimer > 0.0) {
+                doorTimer -= delta;
+                if(doorTimer < 0.0) {
+                    doorTimer = 0.0;
+                    spawnItem(new Bell(this), cookingArea.x1 + 180.0, cookingArea.y1);
+                    spawnItem(new Plate(), cookingArea.x2 - 180.0, cookingArea.y1);
+                    dish = grabbables.getLast();
+                }
+            }
 
-        if(queueOffset < orderSpacing * orders.size()) queueOffset += orderSpacing * 10.0 * delta;
+            orderTimer += delta;
+            if(orderTimer > ThreadLocalRandom.current().nextDouble(8.0, 15.0)) {
+                orderTimer = 0.0;
+                generateOrder();
+            }
 
-        //TODO: Order generation logic
-        if(engine.isKeyPressed(EngineFrame.KEY_ZERO)) generateOrder();
+            //Appraisal logic
+            if(appraising) {
+                if(appraisalTimer == appraisalTime) {
+                    if(dish.size() == 1) setGrabbed(dish);
+                    else {
+                        double posX = dish.getPosX();
+                        double posY = dish.getPosY() + dish.peek().getLocalPosY();
+                        setGrabbed(new Grabbable(dish.pop()));
+                        grabbed.setPos(posX, posY);
+                    }
+                }
 
-        boolean interact = !lockedInteractions ? engine.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT) : false;
+                appraisalTimer -= delta;
+
+                if(appraisalTimer <= 0.0) {
+                    if(finishedAppraisal) {
+                        appraising = false;
+                        queueOffset -= orderSpacing;
+                        setGrabbed(null);
+                        int score = orders.poll().getValidityScore();
+                        for(int i = 0; i < score; i++) {
+                            spawnItem(new Coin(), engine.getScreenWidth() / 2, engine.getScreenHeight() / 2);
+                        }
+                    }
+                    else {
+                        orders.peek().validateNext(grabbed == null ? null : grabbed.peek());
+                        appraisalTimer = appraisalTime;
+                        if(grabbed.peek() instanceof Plate) finishedAppraisal = true;
+                        else grabbables.remove(grabbed);
+                    }
+                }
+            }
+
+            if(queueOffset < orderSpacing * orders.size()) queueOffset += orderSpacing * 10.0 * delta;
+
+            if(Main.debug()) {
+                double midX = engine.getScreenWidth() / 2;
+                double midY = engine.getScreenHeight() / 2;
+
+                if(engine.isKeyPressed(EngineFrame.KEY_ONE)) spawnItem(new Bun(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_TWO)) spawnItem(new Patty(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_THREE)) spawnItem(new Cheese(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_FOUR)) spawnItem(new Cone(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_FIVE)) spawnItem(new IceCreamStrawberry(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_SIX)) spawnItem(new Knife(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_SEVEN)) spawnItem(new Plate(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_EIGHT)) spawnItem(new BunBottom(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_NINE)) spawnItem(new BunTop(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_ZERO)) generateOrder();
+            }
+        }
 
         //Update logic for all grabbables. Order is reversed to ensure the most recently interacted with grabbables are prioritized
         for(int i = grabbables.size() - 1; i >= 0; i--) {
@@ -202,14 +242,14 @@ public class Restaurant extends Scene {
             g.limitPos(cookingArea);
         }
 
-        if(!lockedInteractions) {
+        if(!appraising) {
             for(int i = buttons.size() - 1; i >= 0; i--) {
                 buttons.get(i).tryInteraction(engine);
             }
         }
 
         //Update logic for the grabbed grabbable
-        if(grabbed != null && !lockedInteractions) {
+        if(grabbed != null && !appraising) {
             grabbed.setPos(engine.getMouseX(), engine.getMouseY());
             if(engine.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) {
                 setGrabbed(null);
@@ -228,7 +268,7 @@ public class Restaurant extends Scene {
         park.draw(engine, src, dest);
 
         //Client
-        if(lockedInteractions) {
+        if(appraising) {
             if(!orders.isEmpty()) orders.peek().getClient().draw(engine, engine.getScreenWidth() / 2, cookingArea.y2);
         }
 
@@ -250,20 +290,15 @@ public class Restaurant extends Scene {
         
         //Order queue
         double orderOffset = queueOffset - orderSpacing / 2;
+        double orderY = 24.0 * (1.0 - 20.0 * doorProgress);
         for(Order o : orders) {
-            o.draw(engine, orderOffset, 24.0);
+            o.draw(engine, orderOffset, orderY);
             orderOffset -= orderSpacing;
         }
 
         for(Button p : buttons) {
             p.draw(engine);
         }
-
-        for(Grabbable g : grabbables) {
-            g.draw(engine);
-        }
-
-        if(Main.debug()) cookingArea.draw(engine, EngineFrame.GREEN);
 
         //Cabinet doors
         if(doorTimer > 0.0) {
@@ -281,6 +316,12 @@ public class Restaurant extends Scene {
             dest.x = engine.getScreenWidth() / 2 - halfStroke;
             cabinetDoor.draw(engine, src, dest, scaledWidth / 2, scaledHeight / 2, 180.0);
         }
+
+        for(Grabbable g : grabbables) {
+            g.draw(engine, 1.0 - doorProgress * 1.5);
+        }
+
+        if(Main.debug()) cookingArea.draw(engine, EngineFrame.GREEN);
 
         super.draw();
     }

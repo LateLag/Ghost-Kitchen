@@ -10,12 +10,8 @@ import ghostkitchen.util.ItemUtils;
 public abstract class Transformer extends Item {
     private Map<Class<? extends Item>, List<Class<? extends Item>>> transformations;
 
-    protected Transformer(String image, int width, int height, int baseline) {
-        this(image, width, height, baseline, 0);
-    }
-
-    protected Transformer(String image, int width, int height, int baseline, int sandwichHeight) {
-        super(image, width, height, baseline, sandwichHeight);
+    protected Transformer(String image, int width, int height, int baseline, int sandwichHeight, boolean mixable) {
+        super(image, width, height, baseline, sandwichHeight, mixable);
         this.transformations = new HashMap<>();
     }
 
@@ -35,11 +31,6 @@ public abstract class Transformer extends Item {
             }
             g.setPos(x, y);
         }
-        return false;
-    }
-
-    @Override
-    public boolean idleInteraction(Grabbable g) {
         return false;
     }
 }

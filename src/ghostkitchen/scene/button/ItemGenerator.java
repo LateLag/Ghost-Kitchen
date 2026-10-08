@@ -14,15 +14,25 @@ public class ItemGenerator extends ItemDispenser {
 
         setReleaseAction(() -> {
             Grabbable g = restaurant.getGrabbed();
-            if(g != null && g.isInstanceOf(item)) {
-                restaurant.getGrabbables().remove(restaurant.getGrabbed());
-                restaurant.setGrabbed(null);
+            if(g != null) {
+                int consecutiveMatches = g.consecutiveMatches(item);
+                if(consecutiveMatches > 0) {
+                    if(consecutiveMatches == g.size()) {
+                        restaurant.getGrabbables().remove(restaurant.getGrabbed());
+                        restaurant.setGrabbed(null);
+                    }
+                    else {
+                        for(int i = 0; i < consecutiveMatches; i++) {
+                            g.pop();
+                        }
+                    }
+                }
             }
         });
 
         setHoverAction(() -> {
             Grabbable g = restaurant.getGrabbed();
-            hovered = g == null || g.isInstanceOf(item);
+            hovered = g == null || g.peek().getClass() == item;
         });
     }
 

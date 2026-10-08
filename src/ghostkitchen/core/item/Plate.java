@@ -2,9 +2,9 @@ package ghostkitchen.core.item;
 
 import ghostkitchen.core.Grabbable;
 
-public class Plate extends Ingredient {
+public class Plate extends Item {
     public Plate() {
-        super("plate.png", 100, 38, -8, 6);
+        super("plate.png", 100, 38, -8, 6, true);
     }
 
     @Override

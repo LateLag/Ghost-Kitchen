@@ -12,4 +12,10 @@ public class AABBUtils {
         copy.nearby = aabb.nearby;
         return copy;
     }
+
+    public static AABB offsetCopy(AABB aabb, double x, double y) {
+        AABB copy = copy(aabb);
+        copy.move(x, y);
+        return copy;
+    }
 }

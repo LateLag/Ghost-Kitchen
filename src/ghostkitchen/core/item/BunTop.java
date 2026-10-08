@@ -1,8 +1,8 @@
 package ghostkitchen.core.item;
 
-public class BunTop extends Ingredient {
+public class BunTop extends Item {
     public BunTop() {
-        super("bun_top.png", 56, 36, -10, 20);
+        super("bun_top.png", 56, 36, -10, 20, true);
     }
 
     @Override

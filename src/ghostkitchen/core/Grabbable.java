@@ -81,17 +81,17 @@ public class Grabbable implements Iterable<Item> {
     }
 
     public Grabbable getFromCollision(AABB aabb) {
+        Grabbable g = null;
+
         //Only attempts a grab if the AABB is active
         if(this.aabb.active) {
-            Grabbable g = null;
-            //If the point collides with the top ingredient, pop and return it instead
-            if(size() > 1 && peek().getOffsetAABB(getPosX(), getPosY()).collidesWith(aabb)) {
-                g = new Grabbable(pop());
-            }
+            //If the point collides with the top ingredient and it is meant to split, pop and return it instead
+            Item i = peek();
+            if(i.getOffsetAABB(getPosX(), getPosY()).collidesWith(aabb) && i.pressInteraction(this)) g = new Grabbable(pop());
             else if(this.aabb.collidesWith(aabb)) g = this;
-            return g;
+
         }
-        return null;
+        return g;
     }
 
     public void grab() {
@@ -125,8 +125,17 @@ public class Grabbable implements Iterable<Item> {
         }
     }
 
-    public boolean isInstanceOf(Class<? extends Item> item) {
-        return size() == 1 && peek().getClass() == item;
+    public int consecutiveMatches(Class<? extends Item> ... types) {
+        int amount = 0;
+        for(int i = size() - 1; i >= 0; i--) {
+            boolean matched = false;
+            for(Class<? extends Item> type : types) {
+                if(items.toArray()[i].getClass() == type) matched = true;
+            }
+            if(matched) amount++;
+            else break;
+        }
+        return amount;
     }
 
     public void setAsPotentialMainDish() { potentialMainDish = true; }
@@ -202,6 +211,10 @@ public class Grabbable implements Iterable<Item> {
     public void setActiveAABB(boolean active) { aabb.active = active; }
 
     public void draw(EngineFrame e) {
+        draw(e, 1.0);
+    }
+
+    public void draw(EngineFrame e, double scale) {
         double baseAnimOffset = 10.0 * e.getTime();
         double posX = getPosX();
         double posY = getPosY();
@@ -212,7 +225,7 @@ public class Grabbable implements Iterable<Item> {
             double offsetY = velocity.y < 0.0 ? 0.0 : -velocity.y * 0.05 * layerAnimOffset;
 
             //Only animate when the grabbable is grabbed
-            i.draw(e, posX + offsetX, posY + offsetY, grabbed ? baseAnimOffset + layerAnimOffset : 0.0);
+            i.draw(e, posX + offsetX, posY + offsetY, grabbed ? baseAnimOffset + layerAnimOffset : 0.0, grabbed ? scale * 1.1 : scale);
         }
 
         if(Main.debug()) {

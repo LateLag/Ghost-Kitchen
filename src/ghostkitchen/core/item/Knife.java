@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Knife extends Transformer {
     public Knife() {
-        super("knife.png", 120, 12, -8);
+        super("knife.png", 120, 12, -8, 14, false);
         addTransform(Bun.class, List.of(BunBottom.class, BunTop.class));
     }
 

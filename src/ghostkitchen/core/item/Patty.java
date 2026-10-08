@@ -1,8 +1,8 @@
 package ghostkitchen.core.item;
 
-public class Patty extends Ingredient {
+public class Patty extends Item {
     public Patty() {
-        super("patty.png", 56, 26, -5, 9);
+        super("patty.png", 56, 26, -5, 9, true);
     }
 
     @Override

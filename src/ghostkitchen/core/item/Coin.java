@@ -1,9 +1,8 @@
 package ghostkitchen.core.item;
 
-public class Coin extends Ingredient {
+public class Coin extends Item {
     public Coin() {
-        super("coin.png", 24, 12, -4, 8);
-        this.mixable = false;
+        super("coin.png", 24, 12, -4, 8, false);
     }
 
     @Override

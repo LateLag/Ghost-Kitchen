@@ -4,45 +4,49 @@ import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
-import br.com.davidbuzatto.jsge.image.ImageUtils;
 import ghostkitchen.Main;
+import ghostkitchen.core.ImageCache;
+import ghostkitchen.util.AABBUtils;
 import ghostkitchen.util.PanelUtils;
 
-public class Button {
+public class Button implements ImageCache {
     protected static final double scale = 2.4;
-    protected static final String imgPath = "resources/images/scene/nineslice/";
 
     protected Image image;
     protected int borderSize;
     protected AABB aabb;
     protected boolean hovered;
-    protected ButtonAction pressAction;
-    protected ButtonAction releaseAction;
-    protected ButtonAction hoverAction;
+    protected CustomAction pressAction;
+    protected CustomAction releaseAction;
+    protected CustomAction hoverAction;
 
     public Button(double x, double y) {
         this("generic.png", 4, x - 50.0, y - 50.0, x + 50.0, y + 50.0);
     }
 
     public Button(String image, int borderSize, double x1, double y1, double x2, double y2) {
-        this.image = ImageUtils.loadImage(imgPath + image);
+        this.image = getImage("scene/nineslice/" + image);
         this.borderSize = borderSize;
         this.aabb = new AABB(x1, y1, x2, y2, this);
         this.hovered = false;
         setHoverAction(() -> { hovered = true; });
     }
 
-    public void setPressAction(ButtonAction pressAction) { this.pressAction = pressAction; }
-    public void setReleaseAction(ButtonAction releaseAction) { this.releaseAction = releaseAction; }
-    public void setHoverAction(ButtonAction hoverAction) { this.hoverAction = hoverAction; }
+    public void setPressAction(CustomAction pressAction) { this.pressAction = pressAction; }
+    public void setReleaseAction(CustomAction releaseAction) { this.releaseAction = releaseAction; }
+    public void setHoverAction(CustomAction hoverAction) { this.hoverAction = hoverAction; }
 
     public void tryInteraction(EngineFrame e) {
+        tryInteraction(e, 0.0, 0.0);
+    }
+
+    public void tryInteraction(EngineFrame e, double offsetX, double offsetY) {
         AABB point = new AABB(e.getMouseX(), e.getMouseY(), e.getMouseX(), e.getMouseY(), null);
 
         if(aabb.active && aabb.collidesWith(point)) {
-            if(pressAction != null && e.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) pressAction.onInteraction();
-            else if(releaseAction != null && e.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) releaseAction.onInteraction();
-            else if(hoverAction != null) hoverAction.onInteraction();
+            if(pressAction != null && e.isMouseButtonPressed(EngineFrame.MOUSE_BUTTON_LEFT)) pressAction.onTrigger();
+            else if(releaseAction != null && e.isMouseButtonReleased(EngineFrame.MOUSE_BUTTON_LEFT)) releaseAction.onTrigger();
+            else if(hoverAction != null) hoverAction.onTrigger();
         }
         else hovered = false;
     }
@@ -58,6 +62,8 @@ public class Button {
     protected double getCenterY() {
         return (aabb.y1 + aabb.y2) / 2;
     }
+
+    public AABB getAABB() { return AABBUtils.copy(aabb); }
 
     public void draw(EngineFrame e) {
         double hoverZoom = hovered ? scale : 0.0;

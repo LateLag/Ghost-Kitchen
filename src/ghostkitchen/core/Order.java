@@ -9,10 +9,12 @@ import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
 import ghostkitchen.core.client.Client;
 import ghostkitchen.core.item.Item;
+import ghostkitchen.core.item.Plate;
 import ghostkitchen.util.PanelUtils;
 
 public class Order {
     private static final double ingredientScale = 1.0;
+    private static final Image bg = ImageUtils.loadImage("resources/images/scene/nineslice/order.png");
     private static final Image check = ImageUtils.loadImage("resources/images/scene/misc/checkmark.png");
     private static final Image cross = ImageUtils.loadImage("resources/images/scene/misc/cross.png");
     private static final Image question = ImageUtils.loadImage("resources/images/scene/misc/questionmark.png");
@@ -23,14 +25,12 @@ public class Order {
     private Client client;
     private List<Item> dish;
     private List<Boolean> validation;
-    private Image bg;
 
     public Order(Client client) {
         this.id = currentId++;
         this.client = client;
         this.dish = generateWantedDish();
         this.validation = new ArrayList<>(dish.size());
-        this.bg = ImageUtils.loadImage("resources/images/scene/nineslice/order.png");
     }
 
     public Client getClient() { return client; }
@@ -62,7 +62,9 @@ public class Order {
     public boolean validateNext(Item i) {
         if(validation.size() <= dish.size()) {
             int index = dish.size() - 1 - validation.size();
-            if(i == null || index < 0) validation.add(false);
+            if(i == null || index < 0) {
+                if(!(i instanceof Plate)) validation.add(false);
+            }
             else validation.add(dish.get(index).getClass() == i.getClass());
             return validation.getLast();
         }

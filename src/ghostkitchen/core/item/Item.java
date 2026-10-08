@@ -10,17 +10,16 @@ import br.com.davidbuzatto.jsge.image.ImageUtils;
 
 import ghostkitchen.Main;
 import ghostkitchen.core.Grabbable;
+import ghostkitchen.core.ImageCache;
 import ghostkitchen.util.AABBUtils;
 
-public abstract class Item {
-    protected static final String imgPath = "resources/images/items/";
-
-    private AABB aabb;
-    private Image image;
-    private double collisionWidth;
-    private int baseline;
-    private int sandwichHeight;
-    private double scale;
+public abstract class Item implements ImageCache {
+    protected Image image;
+    protected AABB aabb;
+    protected double collisionWidth;
+    protected int baseline;
+    protected int sandwichHeight;
+    protected double scale;
     protected boolean mixable;
 
     protected Item(String image, int width, int height, int baseline) {
@@ -28,14 +27,20 @@ public abstract class Item {
     }
 
     protected Item(String image, int width, int height, int baseline, int sandwichHeight) {
+        this(image, width, height, baseline, sandwichHeight, false);
+    }
+
+    protected Item(String image, int width, int height, int baseline, int sandwichHeight, boolean mixable) {
         double halfDimX = (double)width / 2.0;
         double halfDimY = (double)height / 2.0;
+        if(image == null) image = "icon.png";
+        this.image = getImage("items/" + image);
         this.aabb = new AABB(-halfDimX, -halfDimY, halfDimX, halfDimY, this);
         this.aabb.type = AABB.Type.DYNAMIC;
-        this.image = ImageUtils.loadImage(imgPath + image);
         this.collisionWidth = (double)width;
         this.baseline = baseline;
         this.sandwichHeight = sandwichHeight;
+        this.mixable = mixable;
         setScale(2.4);
     }
 
@@ -44,9 +49,7 @@ public abstract class Item {
     }
 
     public AABB getOffsetAABB(double x, double y) {
-        AABB copy = getAABB();
-        copy.move(x, y);
-        return copy;
+        return AABBUtils.offsetCopy(aabb, x, y);
     }
 
     public double getLocalPosX() { return (this.aabb.x1 + this.aabb.x2) / 2; }
@@ -59,6 +62,7 @@ public abstract class Item {
     public double getCollisionWidth() { return this.collisionWidth; };
     public double getBaseline() { return getScale() * this.baseline; }
     public double getSandwichHeight() { return getScale() * this.sandwichHeight; }
+    public boolean isMixable() { return this.mixable; }
 
     public void setActiveAABB(boolean active) { this.aabb.active = active; }
 
@@ -83,31 +87,29 @@ public abstract class Item {
     public void draw(EngineFrame e, double animationOffset) { draw(e, 0.0, 0.0, animationOffset); }
 
     public void draw(EngineFrame e, double offsetX, double offsetY, double animationOffset) {
-        draw(e, offsetX, offsetY, animationOffset, null);
+        draw(e, offsetX, offsetY, animationOffset, 1.0, null);
     }
 
-    public void draw(EngineFrame e, double offsetX, double offsetY, double animationOffset, Color tint) {
-        Image img = tint == null || tint == Color.WHITE ? image : ImageUtils.imageColorTint(image, tint);
+    public void draw(EngineFrame e, double offsetX, double offsetY, double animationOffset, double scale) {
+        draw(e, offsetX, offsetY, animationOffset, scale, null);
+    }
 
-        double width = img.getWidth();
-        double height = img.getHeight();
-        
-        double scale = this.scale;
-        double rotation = 0.0;
+    public void draw(EngineFrame e, double offsetX, double offsetY, double animationOffset, double scale, Color tint) {
+        Image image = tint == null || tint == Color.WHITE ? this.image : ImageUtils.imageColorTint(this.image, tint);
 
-        if(animationOffset != 0.0) {
-            rotation = Math.sin(animationOffset) * 5.0;
-            scale *= 1.1;
-        }
+        double width = image.getWidth();
+        double height = image.getHeight();
+
+        double rotation = animationOffset == 0.0 ? 0.0 : Math.sin(animationOffset) * 5.0;
+        scale = scale < 0.0 ? 0.0 : scale * this.scale;
 
         //Scaled and centered
         Rectangle src = new Rectangle(0.0, 0.0, width, height);
         Rectangle dest = new Rectangle(getLocalPosX() - (width / 2.0) * scale + offsetX, getLocalPosY() - height / 2.0 * scale + offsetY, width * scale, height * scale);
-        img.draw(e, src, dest, width / 2.0 * scale, height / 2.0 * scale, rotation);
+        image.draw(e, src, dest, width / 2.0 * scale, height / 2.0 * scale, rotation);
 
         if(Main.debug() && aabb.active) {
-            AABB tempAABB = getAABB();
-            tempAABB.move(offsetX, offsetY);
+            AABB tempAABB = AABBUtils.offsetCopy(aabb, offsetX, offsetY);
             double baseline = (tempAABB.y1 + tempAABB.y2) / 2 - getBaseline();
             double topline = baseline - getSandwichHeight();
 
@@ -122,12 +124,30 @@ public abstract class Item {
      * @param g The grabbable it will interact with
      * @return whether the grabbable should merge or not
      */
-    public abstract boolean hoverInteraction(Grabbable g);
+    public boolean pressInteraction(Grabbable g) {
+        return g.size() > 1;
+    }
 
     /**
      * Behavior when interacting with a grabbable
      * @param g The grabbable it will interact with
      * @return whether the grabbable should merge or not
      */
-    public abstract boolean idleInteraction(Grabbable g);
+    public boolean hoverInteraction(Grabbable g) {
+        return false;
+    }
+
+    /**
+     * Behavior when interacting with a grabbable
+     * @param g The grabbable it will interact with
+     * @return whether the grabbable should merge or not
+     */
+    public boolean idleInteraction(Grabbable g) {
+        Item i = g.peek();
+        if(i.isMixable() && isMixable() || i.getClass() == getClass()) {
+            g.push(this);
+            return true;
+        }
+        return false;
+    }
 }

@@ -1,6 +1,6 @@
 package ghostkitchen.scene.button;
 
 @FunctionalInterface 
-public interface ButtonAction {
-    void onInteraction();
+public interface CustomAction {
+    void onTrigger();
 }
