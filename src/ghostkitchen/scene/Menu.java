@@ -23,7 +23,7 @@ public class Menu extends Scene {
 
     @Override
     public void setup() {
-        playButton = new SceneChanger(engine.getScreenWidth() / 2, engine.getScreenHeight() * 121.0 / 216.0, 120.0, 40.0, (Main)engine, new Restaurant(engine, this));
+        playButton = new SceneChanger(1536 / 2, 864 * 121.0 / 216.0, 120.0, 40.0, (Main)engine, new Restaurant(engine, this));
     }
 
     @Override

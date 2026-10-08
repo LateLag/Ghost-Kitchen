@@ -7,7 +7,7 @@ import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import br.com.davidbuzatto.jsge.image.ImageUtils;
-import ghostkitchen.core.client.Client;
+import ghostkitchen.core.customer.Customer;
 import ghostkitchen.core.item.Item;
 import ghostkitchen.core.item.Plate;
 import ghostkitchen.util.PanelUtils;
@@ -22,18 +22,18 @@ public class Order {
     private static int currentId = 1;
 
     private int id;
-    private Client client;
+    private Customer client;
     private List<Item> dish;
     private List<Boolean> validation;
 
-    public Order(Client client) {
+    public Order(Customer client) {
         this.id = currentId++;
         this.client = client;
         this.dish = generateWantedDish();
         this.validation = new ArrayList<>(dish.size());
     }
 
-    public Client getClient() { return client; }
+    public Customer getClient() { return client; }
 
     private List<Item> generateWantedDish() {
         List<LayerPrefs> preferences = client.getLayerPrefs();

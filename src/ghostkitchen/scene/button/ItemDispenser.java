@@ -57,7 +57,7 @@ public class ItemDispenser extends Button {
     }
 
     public ItemDispenser(Restaurant restaurant, Class<? extends Item> item, double x, double y, int initialAmount) {
-        this(restaurant, item, x, y, 120.0, 120.0, initialAmount);
+        this(restaurant, item, x, y, 108.0, 108.0, initialAmount);
     }
 
     public ItemDispenser(Restaurant restaurant, Class<? extends Item> item, double x, double y) {

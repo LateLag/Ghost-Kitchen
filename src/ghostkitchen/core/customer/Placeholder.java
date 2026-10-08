@@ -1,4 +1,4 @@
-package ghostkitchen.core.client;
+package ghostkitchen.core.customer;
 
 import ghostkitchen.core.LayerPrefs;
 import ghostkitchen.core.item.BunBottom;
@@ -7,10 +7,10 @@ import ghostkitchen.core.item.Cone;
 import ghostkitchen.core.item.IceCreamStrawberry;
 import ghostkitchen.core.item.Patty;
 
-public class Placeholder extends Client {
+public class Placeholder extends Customer {
     public Placeholder() {
         super (
-            "client.png",
+            "customer.png",
             204, 12.0, 12.0,
             new LayerPrefs(BunTop.class, IceCreamStrawberry.class),
             new LayerPrefs(Patty.class, IceCreamStrawberry.class, null),

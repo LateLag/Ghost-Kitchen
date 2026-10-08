@@ -1,4 +1,4 @@
-package ghostkitchen.core.client;
+package ghostkitchen.core.customer;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import ghostkitchen.core.LayerPrefs;
 import ghostkitchen.core.ImageCache;
 import ghostkitchen.util.AABBUtils;
 
-public abstract class Client implements ImageCache {
+public abstract class Customer implements ImageCache {
     private static final int maxAnger = 3;
 
     protected Image image;
@@ -19,7 +19,7 @@ public abstract class Client implements ImageCache {
     private AABB mouth;
     private int anger;
 
-    protected Client(String image, double mouthY, double mouthWidth, double mouthHeight, LayerPrefs ... layers) {
+    protected Customer(String image, double mouthY, double mouthWidth, double mouthHeight, LayerPrefs ... layers) {
         this.image = getImage("clients/" + image);
         this.layerPrefs = List.of(layers).reversed();
         this.mouth = new AABB(-mouthWidth / 2, -mouthY - mouthHeight / 2, mouthWidth / 2, -mouthY + mouthHeight / 2, this);

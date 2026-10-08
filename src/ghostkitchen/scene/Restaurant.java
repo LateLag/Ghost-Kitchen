@@ -13,8 +13,11 @@ import br.com.davidbuzatto.jsge.image.Image;
 import ghostkitchen.Main;
 import ghostkitchen.core.Grabbable;
 import ghostkitchen.core.Order;
-import ghostkitchen.core.client.Client;
-import ghostkitchen.core.client.Placeholder;
+import ghostkitchen.core.customer.ChiffonVelvet;
+import ghostkitchen.core.customer.CindySesame;
+import ghostkitchen.core.customer.Customer;
+import ghostkitchen.core.customer.HansBerger;
+import ghostkitchen.core.customer.StraussBerry;
 import ghostkitchen.core.item.Bell;
 import ghostkitchen.core.item.Bun;
 import ghostkitchen.core.item.BunBottom;
@@ -22,11 +25,21 @@ import ghostkitchen.core.item.BunTop;
 import ghostkitchen.core.item.Cheese;
 import ghostkitchen.core.item.Coin;
 import ghostkitchen.core.item.Cone;
+import ghostkitchen.core.item.CreamChantilly;
+import ghostkitchen.core.item.CreamPastry;
+import ghostkitchen.core.item.CupcakeBase;
+import ghostkitchen.core.item.CupcakeRedVelvet;
+import ghostkitchen.core.item.IceCreamChocolate;
+import ghostkitchen.core.item.IceCreamMint;
 import ghostkitchen.core.item.IceCreamStrawberry;
 import ghostkitchen.core.item.Item;
 import ghostkitchen.core.item.Knife;
+import ghostkitchen.core.item.Lettuce;
+import ghostkitchen.core.item.LettuceChopped;
 import ghostkitchen.core.item.Patty;
 import ghostkitchen.core.item.Plate;
+import ghostkitchen.core.item.Tomato;
+import ghostkitchen.core.item.TomatoSlices;
 import ghostkitchen.scene.button.Button;
 import ghostkitchen.scene.button.CustomAction;
 import ghostkitchen.scene.button.ItemDispenser;
@@ -50,7 +63,7 @@ public class Restaurant extends Scene {
     private List<Grabbable> grabbables;
     private List<Button> buttons;
     private Queue<Order> orders;
-    private Client[] clients;
+    private Customer[] customers;
     private Grabbable grabbed;
     private Grabbable dish;
     private AABB cookingArea;
@@ -68,8 +81,11 @@ public class Restaurant extends Scene {
         this.gameOver = false;
         this.grabbables = new LinkedList<>();
         this.orders = new LinkedList<>();
-        this.clients = new Client[] {
-            new Placeholder()
+        this.customers = new Customer[] {
+            new ChiffonVelvet(),
+            new CindySesame(),
+            new HansBerger(),
+            new StraussBerry()
         };
 
         this.returnToMenu = () -> {
@@ -82,14 +98,24 @@ public class Restaurant extends Scene {
         grabbables.clear();
         cookingArea = new AABB(80.0, -80.0, (double)(engine.getScreenWidth() - 80), (double)(engine.getScreenHeight() - 280), this);
         buttons = new ArrayList<>();
-        double space = 154.0;
-        double pos = engine.getWidth() / 2 - space * 5;
-        buttons.add(new ItemDispenser(this, Bun.class, pos += space, 768));
-        buttons.add(new ItemDispenser(this, Patty.class, pos += space, 768));
-        buttons.add(new ItemDispenser(this, Cheese.class, pos += space, 768));
-        buttons.add(new ItemDispenser(this, Cone.class, pos += space, 768));
-        buttons.add(new ItemDispenser(this, IceCreamStrawberry.class, pos += space, 768));
-        buttons.add(new ItemDispenser(this, Knife.class, pos += space + space / 2, 768, 120 + space, 120.0));
+        int amount = 3;
+        double height = 768;
+        double space = 108.0;
+        double pos = engine.getScreenWidth() / 2 - space * 7;
+        buttons.add(new ItemDispenser(this, Bun.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, Patty.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, Cheese.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, Lettuce.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, Tomato.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, CupcakeBase.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, CupcakeRedVelvet.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, CreamChantilly.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, CreamPastry.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, Cone.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, IceCreamChocolate.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, IceCreamStrawberry.class, pos += space, height, amount));
+        buttons.add(new ItemDispenser(this, IceCreamMint.class, pos += space, height, amount));
+        //buttons.add(new ItemDispenser(this, Knife.class, pos += space + space / 2, height, 108 + space, 108.0));
     }
 
     public void spawnItem(Item item, double posX, double posY) {
@@ -102,8 +128,8 @@ public class Restaurant extends Scene {
         generateOrder(null);
     }
 
-    public void generateOrder(Client c) {
-        if(c == null) c = clients[ThreadLocalRandom.current().nextInt(clients.length)];
+    public void generateOrder(Customer c) {
+        if(c == null) c = customers[ThreadLocalRandom.current().nextInt(customers.length)];
         orders.add(new Order(c));
     }
 
@@ -157,6 +183,7 @@ public class Restaurant extends Scene {
                 if(doorTimer < 0.0) {
                     doorTimer = 0.0;
                     spawnItem(new Bell(this), cookingArea.x1 + 180.0, cookingArea.y1);
+                    spawnItem(new Knife(), (cookingArea.x1 + cookingArea.x2) / 2, cookingArea.y1);
                     spawnItem(new Plate(), cookingArea.x2 - 180.0, cookingArea.y1);
                     dish = grabbables.getLast();
                 }
@@ -207,15 +234,13 @@ public class Restaurant extends Scene {
                 double midX = engine.getScreenWidth() / 2;
                 double midY = engine.getScreenHeight() / 2;
 
-                if(engine.isKeyPressed(EngineFrame.KEY_ONE)) spawnItem(new Bun(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_TWO)) spawnItem(new Patty(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_THREE)) spawnItem(new Cheese(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_FOUR)) spawnItem(new Cone(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_FIVE)) spawnItem(new IceCreamStrawberry(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_SIX)) spawnItem(new Knife(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_SEVEN)) spawnItem(new Plate(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_EIGHT)) spawnItem(new BunBottom(), midX, midY);
-                if(engine.isKeyPressed(EngineFrame.KEY_NINE)) spawnItem(new BunTop(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_ONE)) spawnItem(new Plate(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_TWO)) spawnItem(new Knife(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_THREE)) spawnItem(new Bell(this), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_FOUR)) spawnItem(new BunBottom(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_FIVE)) spawnItem(new BunTop(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_SIX)) spawnItem(new LettuceChopped(), midX, midY);
+                if(engine.isKeyPressed(EngineFrame.KEY_SEVEN)) spawnItem(new TomatoSlices(), midX, midY);
                 if(engine.isKeyPressed(EngineFrame.KEY_ZERO)) generateOrder();
             }
         }
