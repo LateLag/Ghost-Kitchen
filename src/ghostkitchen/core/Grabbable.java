@@ -89,7 +89,6 @@ public class Grabbable implements Iterable<Item> {
             Item i = peek();
             if(i.getOffsetAABB(getPosX(), getPosY()).collidesWith(aabb) && i.pressInteraction(this)) g = new Grabbable(pop());
             else if(this.aabb.collidesWith(aabb)) g = this;
-
         }
         return g;
     }

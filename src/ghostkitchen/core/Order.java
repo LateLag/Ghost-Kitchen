@@ -33,7 +33,7 @@ public class Order {
         this.validation = new ArrayList<>(dish.size());
     }
 
-    public Customer getClient() { return client; }
+    public Customer getCustomer() { return client; }
 
     private List<Item> generateWantedDish() {
         List<LayerPrefs> preferences = client.getLayerPrefs();
@@ -60,6 +60,7 @@ public class Order {
     }
 
     public boolean validateNext(Item i) {
+        //Allows all extra items in the stack to be evaluated while only adding a penalty of one
         if(validation.size() <= dish.size()) {
             int index = dish.size() - 1 - validation.size();
             if(i == null || index < 0) {

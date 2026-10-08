@@ -7,7 +7,7 @@ public class CindySesame extends Customer {
     public CindySesame() {
         super (
             "cindy_sesame.png",
-            204, 12.0, 12.0,
+            62,
             new LayerPrefs(Bun.class)
         );
     }

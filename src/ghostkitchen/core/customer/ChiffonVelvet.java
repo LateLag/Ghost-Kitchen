@@ -5,15 +5,16 @@ import ghostkitchen.core.item.CreamChantilly;
 import ghostkitchen.core.item.CreamPastry;
 import ghostkitchen.core.item.CupcakeBase;
 import ghostkitchen.core.item.CupcakeRedVelvet;
+import ghostkitchen.core.item.IceCreamMint;
 
 public class ChiffonVelvet extends Customer {
     public ChiffonVelvet() {
         super (
             "chiffon_velvet.png",
-            204, 12.0, 12.0,
+            105,
             new LayerPrefs(CreamChantilly.class, CreamPastry.class),
             new LayerPrefs(CreamChantilly.class, CreamPastry.class, null),
-            new LayerPrefs(CreamChantilly.class, CreamPastry.class, null),
+            new LayerPrefs(CreamChantilly.class, CreamPastry.class, IceCreamMint.class, null),
             new LayerPrefs(CupcakeBase.class, CupcakeRedVelvet.class)
         );
     }

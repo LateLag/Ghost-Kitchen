@@ -10,7 +10,7 @@ public class StraussBerry extends Customer {
     public StraussBerry() {
         super (
             "strauss_berry.png",
-            204, 12.0, 12.0,
+            84,
             new LayerPrefs(IceCreamChocolate.class, CreamChantilly.class, null),
             new LayerPrefs(IceCreamStrawberry.class),
             new LayerPrefs(IceCreamStrawberry.class, null),

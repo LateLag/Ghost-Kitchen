@@ -12,7 +12,7 @@ public class HansBerger extends Customer {
     public HansBerger() {
         super (
             "hans_berger.png",
-            204, 12.0, 12.0,
+            103,
             new LayerPrefs(BunTop.class),
             new LayerPrefs(Patty.class, TomatoSlices.class, null),
             new LayerPrefs(Cheese.class, TomatoSlices.class, Patty.class),

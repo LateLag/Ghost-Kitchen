@@ -2,36 +2,30 @@ package ghostkitchen.core.customer;
 
 import java.util.List;
 
-import br.com.davidbuzatto.jsge.collision.aabb.AABB;
 import br.com.davidbuzatto.jsge.core.engine.EngineFrame;
 import br.com.davidbuzatto.jsge.geom.Rectangle;
 import br.com.davidbuzatto.jsge.image.Image;
 import ghostkitchen.Main;
 import ghostkitchen.core.LayerPrefs;
 import ghostkitchen.core.ImageCache;
-import ghostkitchen.util.AABBUtils;
 
 public abstract class Customer implements ImageCache {
     private static final int maxAnger = 3;
 
     protected Image image;
     private List<LayerPrefs> layerPrefs;
-    private AABB mouth;
+    private int mouthY;
     private int anger;
 
-    protected Customer(String image, double mouthY, double mouthWidth, double mouthHeight, LayerPrefs ... layers) {
+    protected Customer(String image, int mouthY, LayerPrefs ... layers) {
         this.image = getImage("clients/" + image);
         this.layerPrefs = List.of(layers).reversed();
-        this.mouth = new AABB(-mouthWidth / 2, -mouthY - mouthHeight / 2, mouthWidth / 2, -mouthY + mouthHeight / 2, this);
+        this.mouthY = mouthY;
         this.anger = 0;
     }
 
     public List<LayerPrefs> getLayerPrefs() { return List.copyOf(layerPrefs); }
-
-    public AABB getMouthAABB() {
-        return AABBUtils.copy(mouth);
-    }
-
+    public double getMouthY() { return 2.4 * mouthY; }
     public int getAnger() { return anger; }
 
     public void increaseAnger() { anger = Math.max(anger + 1, maxAnger); }
@@ -56,9 +50,8 @@ public abstract class Customer implements ImageCache {
 
         if(Main.debug()) {
             e.drawRectangle(dest, EngineFrame.MAGENTA);
-            AABB aabb = getMouthAABB();
-            aabb.move(posX, baseY);
-            aabb.draw(e, EngineFrame.MAGENTA);
+            double offsetY = dest.y + dest.height - mouthY;
+            e.drawLine(dest.x, offsetY, dest.x + dest.width, offsetY, EngineFrame.MAGENTA);
         }
     }
 }
